@@ -75,6 +75,7 @@ textarea.field{min-height:7rem;resize:vertical}
 .top{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:8px;padding-right:84px}
 .who{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-right:auto;color:var(--muted);font-size:.85rem}
 .who a{text-decoration:underline;text-underline-offset:3px}
+.who span.meter{font-variant-numeric:tabular-nums}
 #buddy{position:fixed;top:12px;right:12px;z-index:40;width:74px;height:74px;pointer-events:none;transform-origin:50% 80%;filter:drop-shadow(0 8px 14px rgba(28,25,21,.16))}
 #buddy .body{fill:#1c1915}
 #buddy .cheek{fill:#8c4a2f}
@@ -158,6 +159,7 @@ let openScrap = "";
 let notice = "";
 let account = null;
 let offerBring = false;
+let compiling = false;
 let saveTimer = 0;
 let month = startOfMonth(new Date());
 let picked = stamp(new Date());
@@ -212,6 +214,14 @@ function paintAccount() {
   const email = document.createElement("span");
   email.textContent = account.email;
   slot.append(email);
+  if (account.allowance) {
+    const meter = document.createElement("span");
+    meter.className = "meter";
+    const left = Number(account.allowance.left) || 0;
+    const cap = Number(account.allowance.allowance) || 0;
+    meter.textContent = `${left.toLocaleString()} of ${cap.toLocaleString()} tokens left this week`;
+    slot.append(meter);
+  }
   if (offerBring) {
     const bring = document.createElement("button");
     bring.type = "button";
@@ -330,6 +340,7 @@ function go(next, extra) {
 
 function renderNav() {
   const items = [["now","Now"],["dump","Dump"],["loose","Loose"],["nodate","No date"],["calendar","Calendar"]];
+  if (account?.usage) items.push(["usage", "Usage"]);
   document.getElementById("nav").innerHTML = items.map(([id,label]) => {
     const count = id === "loose" ? looseNotes().length : id === "nodate" ? undatedNotes().length : 0;
     return `<button type="button" data-view="${id}" class="${view===id?"on":""}">${label}${count?` ${count}`:""}</button>`;
@@ -358,6 +369,7 @@ function render() {
   else if (view === "calendar") root.innerHTML = calendarView();
   else if (view === "thread") root.innerHTML = threadView();
   else if (view === "project") root.innerHTML = projectView();
+  else if (view === "usage") root.innerHTML = usageView();
   const line = document.getElementById("note-line");
   if (line) {
     line.hidden = !notice;
@@ -423,6 +435,7 @@ function nowView() {
        <div class="stack">${week.length ? week.map((item) => taskCard(item, false)).join("") : `<p class="empty">Nothing in the next 7 days.</p>`}</div>`;
   return `<p class="kicker">Now</p><h1>What’s due</h1>
     <p class="sub">${looseNotes().length} loose · ${undatedNotes().length} in a project with no date.</p>
+    ${account ? `<div class="row" style="margin-top:14px"><button type="button" class="btn ink" id="compile" ${compiling ? "disabled" : ""}>Organize loose notes</button></div>` : ""}
     <input id="find" class="field" style="margin-top:14px" placeholder="Search notes" value="${esc(query)}" aria-label="Search notes">
     ${blocks}`;
 }
@@ -560,7 +573,68 @@ function resolveProject(selectValue, name) {
   return id;
 }
 
+function usageView() {
+  return `<p class="kicker">Usage</p><h1>Allowance</h1>
+    <p class="sub">Who organized notes, and how many tokens. Not their notes.</p>
+    <div id="usage-body"><p class="empty">Loading…</p></div>`;
+}
+async function loadAllowance() {
+  if (!account) return;
+  try {
+    const res = await fetch("/api/allowance");
+    if (res.ok) account.allowance = await res.json();
+  } catch {
+    /* meter stays as it was */
+  }
+}
+async function compileNotes() {
+  if (compiling || !account) return;
+  compiling = true;
+  notice = "Organizing loose notes…";
+  render();
+  try {
+    const res = await fetch("/api/compile", { method: "POST" });
+    const body = await res.json();
+    if (!res.ok) notice = body.error || "Could not organize.";
+    else {
+      db = normalize(body.desk);
+      notice = body.summary;
+      if (body.allowance) account.allowance = body.allowance;
+    }
+  } catch {
+    notice = "Could not organize.";
+  }
+  compiling = false;
+  await loadAllowance();
+  render();
+}
+async function fillUsage() {
+  const slot = document.getElementById("usage-body");
+  if (!slot) return;
+  const res = await fetch("/api/usage");
+  if (!res.ok) {
+    slot.innerHTML = `<p class="empty">Could not load usage.</p>`;
+    return;
+  }
+  const body = await res.json();
+  const week = account?.allowance?.week;
+  const rows = (body.rows || []).filter((row) => !week || row.week === week);
+  const totals = new Map();
+  for (const row of rows) {
+    const spent = (Number(row.input_tokens) || 0) + (Number(row.output_tokens) || 0);
+    totals.set(row.email, (totals.get(row.email) || 0) + spent);
+  }
+  if (!totals.size) {
+    slot.innerHTML = `<p class="empty">No organizes yet this week.</p>`;
+    return;
+  }
+  slot.innerHTML = [...totals].map(([email, spent]) => `<article class="card"><p>${esc(email)}</p><p class="muted">${spent.toLocaleString()} tokens this week</p></article>`).join("");
+}
+
 function bind() {
+  const compile = document.getElementById("compile");
+  if (compile) compile.onclick = () => { void compileNotes(); };
+  if (view === "usage") void fillUsage();
   const dump = document.getElementById("dump");
   if (dump) dump.onsubmit = (e) => {
     e.preventDefault();
@@ -788,6 +862,7 @@ async function start() {
           db = blank();
           offerBring = localHasNotes();
         }
+        await loadAllowance();
         render();
         return;
       }

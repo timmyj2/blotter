@@ -18,3 +18,9 @@ In Cloudflare, for the `blotters` Pages project:
    - `ACCESS_AUD` = that audience tag
 
 Redeploy after the variables are saved. Sign in, and only that Gmail can read those notes.
+
+## Organize
+
+Add a secret named `XAI_API_KEY` on the Pages project. Do not put the key in the page.
+
+Each account gets 50,000 tokens a week, reset Monday in Houston time. The meter sits next to the email. Set `WEEKLY_TOKENS` to change the cap. Usage lists token totals only, not note text.

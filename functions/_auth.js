@@ -28,6 +28,11 @@ export function logoutUrl(env) {
   return `${iss}/cdn-cgi/access/logout?returnTo=${back}`;
 }
 
+export function isOwner(email, env) {
+  const owner = String(env.OWNER_EMAIL || "tjshed@gmail.com").trim().toLowerCase();
+  return email === owner;
+}
+
 export async function emailFromAccess(request, env) {
   const iss = teamIssuer(env);
   const aud = env.ACCESS_AUD;
