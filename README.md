@@ -21,6 +21,6 @@ Redeploy after the variables are saved. Sign in, and only that Gmail can read th
 
 ## Organize
 
-**Organize loose notes** sorts on the page. It groups notes that share words, names, #tags, or a date. It does not call the API and does not spend tokens.
+**Organize loose notes** sorts on the page. It groups notes that share words, names, #tags, or a date.
 
 `[[a name]]` inside a note draws a line on the Map. Search accepts words, `"a phrase"`, `#tag`, and `[[name]]`.

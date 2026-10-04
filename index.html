@@ -75,7 +75,6 @@ textarea.field{min-height:7rem;resize:vertical}
 .top{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:8px;padding-right:84px}
 .who{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-right:auto;color:var(--muted);font-size:.85rem}
 .who a{text-decoration:underline;text-underline-offset:3px}
-.who span.meter{font-variant-numeric:tabular-nums}
 #buddy{position:fixed;top:12px;right:12px;z-index:40;width:74px;height:74px;pointer-events:none;transform-origin:50% 80%;filter:drop-shadow(0 8px 14px rgba(28,25,21,.16))}
 #buddy .body{fill:#1c1915}
 #buddy .cheek{fill:#8c4a2f}
@@ -219,14 +218,6 @@ function paintAccount() {
   const email = document.createElement("span");
   email.textContent = account.email;
   slot.append(email);
-  if (account.allowance) {
-    const meter = document.createElement("span");
-    meter.className = "meter";
-    const left = Number(account.allowance.left) || 0;
-    const cap = Number(account.allowance.allowance) || 0;
-    meter.textContent = `${left.toLocaleString()} of ${cap.toLocaleString()} tokens left this week`;
-    slot.append(meter);
-  }
   if (offerBring) {
     const bring = document.createElement("button");
     bring.type = "button";
@@ -345,7 +336,6 @@ function go(next, extra) {
 
 function renderNav() {
   const items = [["now","Now"],["dump","Dump"],["loose","Loose"],["nodate","No date"],["calendar","Calendar"],["map","Map"],["search","Search"]];
-  if (account?.usage) items.push(["usage", "Usage"]);
   document.getElementById("nav").innerHTML = items.map(([id,label]) => {
     const count = id === "loose" ? looseNotes().length : id === "nodate" ? undatedNotes().length : 0;
     return `<button type="button" data-view="${id}" class="${view===id?"on":""}">${label}${count?` ${count}`:""}</button>`;
@@ -376,7 +366,6 @@ function render() {
   else if (view === "map") root.innerHTML = mapView();
   else if (view === "search") root.innerHTML = searchView();
   else if (view === "project") root.innerHTML = projectView();
-  else if (view === "usage") root.innerHTML = usageView();
   const line = document.getElementById("note-line");
   if (line) {
     line.hidden = !notice;
@@ -423,7 +412,7 @@ function guideCard() {
     <h2 style="font-family:var(--serif);font-weight:500;margin:6px 0 10px">Dump first. Sort later.</h2>
     <p>Open <strong>Dump</strong> and write the thought, or drop a <strong>.md</strong> file. It does not need a project or a date yet.</p>
     <p class="muted" style="margin-top:8px"><strong>Loose</strong> is the pile. Pick notes and give them a project or a day by hand.</p>
-    <p class="muted" style="margin-top:8px"><strong>Organize loose notes</strong> sorts on the page. It looks for dates, names, #tags, and notes that share words. It does not use AI tokens.</p>
+    <p class="muted" style="margin-top:8px"><strong>Organize loose notes</strong> sorts on the page. It looks for dates, names, #tags, and notes that share words.</p>
     <p class="muted" style="margin-top:8px">Type <strong>[[a name]]</strong> inside a note to draw a line. <strong>Map</strong> shows those lines. <strong>Search</strong> finds the note and what it connects to.</p>
     <p class="muted" style="margin-top:8px"><strong>Now</strong> is what is due this week. <strong>Calendar</strong> shows the days that have something on them. Your notes stay on this Google account.</p>
     <div class="row" style="margin-top:12px"><button type="button" class="btn ink" id="hide-guide">Got it</button></div>
@@ -474,7 +463,7 @@ function nowView() {
   return `<p class="kicker">Now</p><h1>What’s due</h1>
     <p class="sub">${looseNotes().length} loose · ${undatedNotes().length} in a project with no date.</p>
     ${rot}
-    ${account ? `<div class="row" style="margin-top:14px"><button type="button" class="btn ink" id="compile" ${compiling ? "disabled" : ""}>Organize loose notes</button>${undo}</div><p class="muted" style="margin-top:8px">Sorts on the page from dates, names, tags, and shared words. Does not use AI tokens.</p>` : ""}
+    ${account ? `<div class="row" style="margin-top:14px"><button type="button" class="btn ink" id="compile" ${compiling ? "disabled" : ""}>Organize loose notes</button>${undo}</div><p class="muted" style="margin-top:8px">Sorts on the page from dates, names, tags, and shared words.</p>` : ""}
     ${guideCard()}
     <input id="find" class="field" style="margin-top:14px" placeholder="Search notes" value="${esc(query)}" aria-label="Search notes">
     ${lead}
@@ -751,20 +740,6 @@ function searchView() {
     ${linked.length ? `<h2 style="font-family:var(--serif);font-weight:500;margin-top:18px">Connected</h2><div class="stack">${links}</div>` : ""}`;
 }
 
-function usageView() {
-  return `<p class="kicker">Usage</p><h1>Allowance</h1>
-    <p class="sub">Who organized notes, and how many tokens. Not their notes.</p>
-    <div id="usage-body"><p class="empty">Loading…</p></div>`;
-}
-async function loadAllowance() {
-  if (!account) return;
-  try {
-    const res = await fetch("/api/allowance");
-    if (res.ok) account.allowance = await res.json();
-  } catch {
-    /* meter stays as it was */
-  }
-}
 async function compileNotes() {
   if (compiling || !account) return;
   compiling = true;
@@ -783,36 +758,12 @@ async function compileNotes() {
       db = normalize(body.desk);
       priorDesk = snapshot;
       notice = body.summary;
-      if (body.allowance) account.allowance = body.allowance;
     }
   } catch {
     notice = "Could not organize.";
   }
   compiling = false;
-  await loadAllowance();
   render();
-}
-async function fillUsage() {
-  const slot = document.getElementById("usage-body");
-  if (!slot) return;
-  const res = await fetch("/api/usage");
-  if (!res.ok) {
-    slot.innerHTML = `<p class="empty">Could not load usage.</p>`;
-    return;
-  }
-  const body = await res.json();
-  const week = account?.allowance?.week;
-  const rows = (body.rows || []).filter((row) => !week || row.week === week);
-  const totals = new Map();
-  for (const row of rows) {
-    const spent = (Number(row.input_tokens) || 0) + (Number(row.output_tokens) || 0);
-    totals.set(row.email, (totals.get(row.email) || 0) + spent);
-  }
-  if (!totals.size) {
-    slot.innerHTML = `<p class="empty">No organizes yet this week.</p>`;
-    return;
-  }
-  slot.innerHTML = [...totals].map(([email, spent]) => `<article class="card"><p>${esc(email)}</p><p class="muted">${spent.toLocaleString()} tokens this week</p></article>`).join("");
 }
 
 function bind() {
@@ -838,7 +789,6 @@ function bind() {
     view = "now";
     render();
   };
-  if (view === "usage") void fillUsage();
   document.querySelectorAll("[data-map]").forEach((btn) => {
     btn.onclick = () => openNode(btn.dataset.map);
   });
@@ -1074,7 +1024,6 @@ async function start() {
           db = blank();
           offerBring = localHasNotes();
         }
-        await loadAllowance();
         render();
         return;
       }
