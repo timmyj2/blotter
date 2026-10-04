@@ -164,6 +164,7 @@ let notice = "";
 let account = null;
 let offerBring = false;
 let compiling = false;
+let priorDesk = "";
 let saveTimer = 0;
 let month = startOfMonth(new Date());
 let picked = stamp(new Date());
@@ -393,6 +394,7 @@ function dumpView() {
       <textarea class="field" name="text" aria-label="Scrap" placeholder="What’s on your mind" required></textarea>
       <div class="row">
         <button class="btn ink" type="submit">Keep it</button>
+        <button class="btn" type="button" id="due-today">Due today</button>
         <label class="btn file">Open a file<input id="file" type="file" accept=".md,.markdown,.txt,.text,text/markdown,text/plain" multiple></label>
       </div>
     </form>
@@ -428,6 +430,14 @@ function guideCard() {
   </article>`;
 }
 
+function ageDays(iso) {
+  const then = new Date(iso);
+  if (Number.isNaN(then.getTime())) return 0;
+  return Math.floor((Date.now() - then.getTime()) / 86400000);
+}
+function coldNotes() {
+  return looseNotes().filter((scrap) => ageDays(scrap.createdAt) >= 7);
+}
 function nowView() {
   const start = today();
   const end = addDays(start, 6);
@@ -443,21 +453,31 @@ function nowView() {
   tasks.sort((a, b) => a.day.localeCompare(b.day));
   const overdue = tasks.filter((item) => item.day < start);
   const week = tasks.filter((item) => item.day >= start && item.day <= end);
+  const next = overdue[0] || week.find((item) => item.day === start) || null;
+  const cold = coldNotes();
   const q = query.trim().toLowerCase();
   const hits = q.length < 2 ? [] : [
     ...db.threads.filter((t) => !t.done && (t.title + " " + (t.next || "")).toLowerCase().includes(q)).map((t) => ({ kind: "thread", id: t.id, title: t.title, projectId: t.projectId, next: t.next || "", day: t.targetDate })),
     ...db.scraps.filter((s) => !s.done && !s.threadId && s.text.toLowerCase().includes(q)).map((s) => ({ kind: "scrap", id: s.id, title: s.text, projectId: s.projectId, next: "", day: s.targetDate })),
   ];
+  const same = (item) => next && item.kind === next.kind && item.id === next.id;
+  const later = overdue.filter((item) => !same(item));
+  const soon = week.filter((item) => !same(item));
   const blocks = q.length >= 2
     ? `<h2 style="font-family:var(--serif);font-weight:500;margin-top:18px">Matches</h2><div class="stack">${hits.length ? hits.map((item) => taskCard(item, item.day && item.day < start)).join("") : `<p class="empty">Nothing matches.</p>`}</div>`
-    : `${overdue.length ? `<h2 class="late" style="font-family:var(--serif);font-weight:500;margin-top:18px">Overdue</h2><div class="stack">${overdue.map((item) => taskCard(item, true)).join("")}</div>` : ""}
+    : `${later.length ? `<h2 class="late" style="font-family:var(--serif);font-weight:500;margin-top:18px">Overdue</h2><div class="stack">${later.map((item) => taskCard(item, true)).join("")}</div>` : ""}
        <h2 style="font-family:var(--serif);font-weight:500;margin-top:18px">This week</h2>
-       <div class="stack">${week.length ? week.map((item) => taskCard(item, false)).join("") : `<p class="empty">Nothing in the next 7 days.</p>`}</div>`;
+       <div class="stack">${soon.length ? soon.map((item) => taskCard(item, false)).join("") : `<p class="empty">Nothing else in the next 7 days.</p>`}</div>`;
+  const lead = q.length >= 2 || !next ? "" : `<h2 style="font-family:var(--serif);font-weight:500;margin-top:18px">Do this next</h2><div class="stack">${taskCard(next, next.day < start)}</div>`;
+  const rot = cold.length ? `<p class="late" style="margin-top:10px">${cold.length} loose note${cold.length === 1 ? "" : "s"} sitting a week or more. <button type="button" class="btn" id="open-loose">Open loose</button></p>` : "";
+  const undo = priorDesk ? `<button type="button" class="btn" id="undo-sort">Undo the last sort</button>` : "";
   return `<p class="kicker">Now</p><h1>What’s due</h1>
     <p class="sub">${looseNotes().length} loose · ${undatedNotes().length} in a project with no date.</p>
-    ${account ? `<div class="row" style="margin-top:14px"><button type="button" class="btn ink" id="compile" ${compiling ? "disabled" : ""}>Organize loose notes</button></div><p class="muted" style="margin-top:8px">Sorts on the page from dates, names, tags, and shared words. Does not use AI tokens.</p>` : ""}
+    ${rot}
+    ${account ? `<div class="row" style="margin-top:14px"><button type="button" class="btn ink" id="compile" ${compiling ? "disabled" : ""}>Organize loose notes</button>${undo}</div><p class="muted" style="margin-top:8px">Sorts on the page from dates, names, tags, and shared words. Does not use AI tokens.</p>` : ""}
     ${guideCard()}
     <input id="find" class="field" style="margin-top:14px" placeholder="Search notes" value="${esc(query)}" aria-label="Search notes">
+    ${lead}
     ${blocks}`;
 }
 
@@ -490,7 +510,7 @@ function placeView(mode) {
       <label class="check"><input type="checkbox" data-id="${esc(s.id)}" ${selected.has(s.id)?"checked":""} aria-label="Select scrap"></label>
       <div class="body">
         <h2><button type="button" class="read" data-read="${esc(s.id)}">${esc(title)}</button></h2>
-        <div class="meta"><span>${esc(when(s.createdAt))}</span>${tag?`<span>${esc(tag)}</span>`:""}<button type="button" data-remove="${esc(s.id)}">${armed===s.id?"Remove it":"Remove"}</button></div>
+        <div class="meta"><span>${esc(when(s.createdAt))}</span>${ageDays(s.createdAt) >= 2 ? `<span>${ageDays(s.createdAt)} days</span>` : ""}${tag?`<span>${esc(tag)}</span>`:""}<button type="button" data-remove="${esc(s.id)}">${armed===s.id?"Remove it":"Remove"}</button></div>
       </div>
     </article>`;
   }).join("") : `<p class="empty">${mode==="loose" ? "Nothing loose. Dump first." : "Every project note has a date, or there are none yet."}</p>`;
@@ -748,6 +768,7 @@ async function loadAllowance() {
 async function compileNotes() {
   if (compiling || !account) return;
   compiling = true;
+  const snapshot = JSON.stringify(db);
   notice = "Organizing loose notes…";
   render();
   try {
@@ -760,6 +781,7 @@ async function compileNotes() {
     if (!res.ok) notice = body.error || "Could not organize.";
     else {
       db = normalize(body.desk);
+      priorDesk = snapshot;
       notice = body.summary;
       if (body.allowance) account.allowance = body.allowance;
     }
@@ -796,6 +818,26 @@ async function fillUsage() {
 function bind() {
   const compile = document.getElementById("compile");
   if (compile) compile.onclick = () => { void compileNotes(); };
+  const undoSort = document.getElementById("undo-sort");
+  if (undoSort) undoSort.onclick = () => {
+    if (!priorDesk) return;
+    db = normalize(JSON.parse(priorDesk));
+    priorDesk = "";
+    notice = "Sort undone.";
+    save();
+    render();
+  };
+  const openLoose = document.getElementById("open-loose");
+  if (openLoose) openLoose.onclick = () => go("loose");
+  const dueToday = document.getElementById("due-today");
+  if (dueToday) dueToday.onclick = () => {
+    const text = new FormData(document.getElementById("dump")).get("text").toString().trim();
+    if (!text) return;
+    db.scraps.unshift({ id: uid(), text, createdAt: new Date().toISOString(), threadId: null, projectId: null, targetDate: today(), done: false });
+    save();
+    view = "now";
+    render();
+  };
   if (view === "usage") void fillUsage();
   document.querySelectorAll("[data-map]").forEach((btn) => {
     btn.onclick = () => openNode(btn.dataset.map);
