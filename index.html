@@ -91,6 +91,9 @@ html[data-theme="dark"] #buddy .mouth{stroke:#e0a07e}
 .seg button{min-height:36px;border:0;border-radius:999px;background:transparent;color:var(--muted);padding:0 12px}
 .seg button.on{background:var(--ink);color:var(--paper)}
 .empty{color:var(--muted);margin-top:16px}
+.map{width:100%;height:min(72vh,640px);border:1px solid var(--line);border-radius:18px;background:var(--sheet)}
+.map button{cursor:pointer}
+.map text{font-size:11px;fill:var(--ink);pointer-events:none}
 #drop{position:fixed;inset:12px;z-index:30;display:grid;place-items:center;border:2px dashed var(--clay);border-radius:20px;background:color-mix(in srgb,var(--paper) 90%,transparent);font-family:var(--serif);font-size:clamp(1.4rem,4vw,2rem);text-align:center;padding:24px;pointer-events:none}
 #drop[hidden]{display:none}
 .file{position:relative}
@@ -147,7 +150,7 @@ html[data-theme="dark"] #buddy .mouth{stroke:#e0a07e}
 <script>
 const KEY = "return-site-v1";
 const THEME = "return-site-theme";
-const GUIDE = "blotter-guide-2";
+const GUIDE = "blotter-guide-3";
 const blank = () => ({ scraps: [], threads: [], projects: [] });
 let db = load();
 let view = "now";
@@ -340,7 +343,7 @@ function go(next, extra) {
 }
 
 function renderNav() {
-  const items = [["now","Now"],["dump","Dump"],["loose","Loose"],["nodate","No date"],["calendar","Calendar"]];
+  const items = [["now","Now"],["dump","Dump"],["loose","Loose"],["nodate","No date"],["calendar","Calendar"],["map","Map"],["search","Search"]];
   if (account?.usage) items.push(["usage", "Usage"]);
   document.getElementById("nav").innerHTML = items.map(([id,label]) => {
     const count = id === "loose" ? looseNotes().length : id === "nodate" ? undatedNotes().length : 0;
@@ -369,6 +372,8 @@ function render() {
   else if (view === "nodate") root.innerHTML = placeView("nodate");
   else if (view === "calendar") root.innerHTML = calendarView();
   else if (view === "thread") root.innerHTML = threadView();
+  else if (view === "map") root.innerHTML = mapView();
+  else if (view === "search") root.innerHTML = searchView();
   else if (view === "project") root.innerHTML = projectView();
   else if (view === "usage") root.innerHTML = usageView();
   const line = document.getElementById("note-line");
@@ -415,8 +420,9 @@ function guideCard() {
     <p class="kicker">First time</p>
     <h2 style="font-family:var(--serif);font-weight:500;margin:6px 0 10px">Dump first. Sort later.</h2>
     <p>Open <strong>Dump</strong> and write the thought, or drop a <strong>.md</strong> file. It does not need a project or a date yet.</p>
-    <p class="muted" style="margin-top:8px"><strong>Loose</strong> is the pile. Pick notes and give them a project or a day by hand, for free.</p>
-    <p class="muted" style="margin-top:8px"><strong>Organize loose notes</strong> uses AI. Each run spends tokens from the weekly allowance next to your email. Sorting by hand does not.</p>
+    <p class="muted" style="margin-top:8px"><strong>Loose</strong> is the pile. Pick notes and give them a project or a day by hand.</p>
+    <p class="muted" style="margin-top:8px"><strong>Organize loose notes</strong> sorts on the page. It looks for dates, names, #tags, and notes that share words. It does not use AI tokens.</p>
+    <p class="muted" style="margin-top:8px">Type <strong>[[a name]]</strong> inside a note to draw a line. <strong>Map</strong> shows those lines. <strong>Search</strong> finds the note and what it connects to.</p>
     <p class="muted" style="margin-top:8px"><strong>Now</strong> is what is due this week. <strong>Calendar</strong> shows the days that have something on them. Your notes stay on this Google account.</p>
     <div class="row" style="margin-top:12px"><button type="button" class="btn ink" id="hide-guide">Got it</button></div>
   </article>`;
@@ -449,7 +455,7 @@ function nowView() {
        <div class="stack">${week.length ? week.map((item) => taskCard(item, false)).join("") : `<p class="empty">Nothing in the next 7 days.</p>`}</div>`;
   return `<p class="kicker">Now</p><h1>What’s due</h1>
     <p class="sub">${looseNotes().length} loose · ${undatedNotes().length} in a project with no date.</p>
-    ${account ? `<div class="row" style="margin-top:14px"><button type="button" class="btn ink" id="compile" ${compiling ? "disabled" : ""}>Organize loose notes</button></div><p class="muted" style="margin-top:8px">Uses AI tokens from the weekly allowance. Sorting by hand does not.</p>` : ""}
+    ${account ? `<div class="row" style="margin-top:14px"><button type="button" class="btn ink" id="compile" ${compiling ? "disabled" : ""}>Organize loose notes</button></div><p class="muted" style="margin-top:8px">Sorts on the page from dates, names, tags, and shared words. Does not use AI tokens.</p>` : ""}
     ${guideCard()}
     <input id="find" class="field" style="margin-top:14px" placeholder="Search notes" value="${esc(query)}" aria-label="Search notes">
     ${blocks}`;
@@ -588,6 +594,143 @@ function resolveProject(selectValue, name) {
   return id;
 }
 
+function noteKeys(text) {
+  const skip = new Set("this that with from have your about into they them will just what when where which there their would could should been were after before today tomorrow need want make like some more than then also only over under next week date note notes".split(" "));
+  const words = String(text).toLowerCase().match(/[a-z0-9][a-z0-9'-]{3,}/g) || [];
+  return [...new Set(words.filter((word) => word.length >= 4 && !skip.has(word)))];
+}
+function wikis(text) {
+  return [...String(text).matchAll(/\[\[([^\]\n]{1,80})\]\]/g)].map((match) => match[1].trim()).filter(Boolean);
+}
+function openNode(ref) {
+  const cut = String(ref || "").indexOf(":");
+  if (cut < 0) return;
+  const kind = ref.slice(0, cut);
+  const id = ref.slice(cut + 1);
+  if (kind === "thread") go("thread", { threadId: id });
+  else if (kind === "project") go("project", { projectId: id });
+  else if (kind === "scrap") {
+    const scrap = db.scraps.find((item) => item.id === id);
+    query = scrap ? scrap.text.slice(0, 48) : "";
+    go("search");
+  }
+}
+function linkedTo(id) {
+  const scrap = db.scraps.find((item) => item.id === id);
+  const thread = db.threads.find((item) => item.id === id);
+  const title = (thread ? thread.title : scrap ? scrap.text : "").trim();
+  const needle = title.slice(0, 48).toLowerCase();
+  const keys = noteKeys(title);
+  const hits = [];
+  const push = (kind, item, why) => {
+    if (hits.some((hit) => hit.kind === kind && hit.id === item.id)) return;
+    hits.push({ kind, id: item.id, title: kind === "scrap" ? item.text : item.title || item.name, why });
+  };
+  for (const other of db.scraps) {
+    if (scrap && other.id === scrap.id) continue;
+    const text = other.text.toLowerCase();
+    if (needle.length > 4 && text.includes(`[[${needle}`)) push("scrap", other, "mentions it");
+    else if (scrap && other.threadId && other.threadId === scrap.threadId) push("scrap", other, "same thread");
+    else if (scrap && other.projectId && other.projectId === scrap.projectId) push("scrap", other, "same project");
+    else if (keys.length && noteKeys(other.text).some((key) => keys.includes(key))) push("scrap", other, "shared words");
+  }
+  for (const other of db.threads) {
+    if (thread && other.id === thread.id) continue;
+    if (needle.length > 4 && other.title.toLowerCase().includes(needle.slice(0, 24))) push("thread", other, "similar title");
+    if (scrap && other.id === scrap.threadId) push("thread", other, "its thread");
+  }
+  return hits.slice(0, 8);
+}
+function searchHits(raw) {
+  const text = raw.trim();
+  if (text.length < 2) return [];
+  const tag = (text.match(/#([\w-]+)/) || [])[1]?.toLowerCase() || "";
+  const phrase = (text.match(/"([^"]+)"/) || [])[1]?.toLowerCase() || "";
+  const wiki = (text.match(/\[\[([^\]\n]+)\]\]/) || [])[1]?.trim().toLowerCase() || "";
+  const terms = text.replace(/#([\w-]+)/g, " ").replace(/"[^"]+"/g, " ").replace(/\[\[[^\]\n]+\]\]/g, " ").toLowerCase().split(/\s+/).filter((term) => term.length > 1);
+  const match = (hay) => {
+    const lower = hay.toLowerCase();
+    if (tag && !lower.includes(tag) && !lower.includes("#" + tag)) return false;
+    if (phrase && !lower.includes(phrase)) return false;
+    if (wiki && !lower.includes(wiki)) return false;
+    return terms.every((term) => lower.includes(term));
+  };
+  const hits = [];
+  for (const project of db.projects) if (match(project.name)) hits.push({ kind: "project", id: project.id, title: project.name, why: "project" });
+  for (const thread of db.threads) if (match(thread.title + " " + (thread.next || ""))) hits.push({ kind: "thread", id: thread.id, title: thread.title, why: thread.targetDate || "thread" });
+  for (const scrap of db.scraps) if (!scrap.done && match(scrap.text)) hits.push({ kind: "scrap", id: scrap.id, title: scrap.text, why: scrap.targetDate || "note" });
+  return hits.slice(0, 30);
+}
+function mapView() {
+  const nodes = [];
+  const edges = [];
+  const cx = 430;
+  const cy = 300;
+  const projects = db.projects.slice(0, 10);
+  const threads = db.threads.filter((thread) => !thread.done).slice(0, 20);
+  const scraps = db.scraps.filter((scrap) => !scrap.done).slice(0, 40);
+  projects.forEach((project, index) => {
+    const angle = (Math.PI * 2 * index) / Math.max(projects.length, 1) - Math.PI / 2;
+    nodes.push({ id: "project:" + project.id, kind: "project", label: project.name, x: cx + Math.cos(angle) * 160, y: cy + Math.sin(angle) * 120 });
+  });
+  threads.forEach((thread, index) => {
+    const parent = nodes.find((node) => node.id === "project:" + thread.projectId);
+    const angle = (Math.PI * 2 * index) / Math.max(threads.length, 1);
+    nodes.push({
+      id: "thread:" + thread.id,
+      kind: "thread",
+      label: thread.title,
+      x: parent ? parent.x + Math.cos(angle) * 84 : cx + Math.cos(angle) * 70,
+      y: parent ? parent.y + Math.sin(angle) * 60 : cy + Math.sin(angle) * 48,
+    });
+    if (parent) edges.push([parent.id, "thread:" + thread.id]);
+  });
+  scraps.forEach((scrap, index) => {
+    const parent = nodes.find((node) => node.id === "thread:" + scrap.threadId) || nodes.find((node) => node.id === "project:" + scrap.projectId);
+    const angle = (Math.PI * 2 * index) / Math.max(scraps.length, 1);
+    nodes.push({
+      id: "scrap:" + scrap.id,
+      kind: "scrap",
+      label: scrap.text,
+      x: parent ? parent.x + Math.cos(angle) * 48 : cx + Math.cos(angle) * 240,
+      y: parent ? parent.y + Math.sin(angle) * 36 : cy + Math.sin(angle) * 190,
+    });
+    if (parent) edges.push([parent.id, "scrap:" + scrap.id]);
+  });
+  for (const scrap of scraps) {
+    for (const link of wikis(scrap.text)) {
+      const target = nodes.find((node) => node.label.toLowerCase().includes(link.toLowerCase()));
+      if (target && target.id !== "scrap:" + scrap.id) edges.push(["scrap:" + scrap.id, target.id]);
+    }
+  }
+  const lines = edges.map(([from, to]) => {
+    const a = nodes.find((node) => node.id === from);
+    const b = nodes.find((node) => node.id === to);
+    if (!a || !b) return "";
+    return `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="currentColor" stroke-opacity="0.28"/>`;
+  }).join("");
+  const dots = nodes.map((node) => {
+    const r = node.kind === "project" ? 11 : node.kind === "thread" ? 8 : 5;
+    const label = node.label.replace(/\s+/g, " ").trim().slice(0, 22);
+    return `<g data-map="${esc(node.id)}" style="cursor:pointer"><circle cx="${node.x.toFixed(1)}" cy="${node.y.toFixed(1)}" r="${r}" fill="${node.kind === "scrap" ? "var(--muted)" : "var(--clay)"}"/><text x="${(node.x + r + 4).toFixed(1)}" y="${(node.y + 4).toFixed(1)}">${esc(label)}</text></g>`;
+  }).join("");
+  return `<p class="kicker">Map</p><h1>How notes connect</h1>
+    <p class="sub">Projects and threads pull their notes in. A [[name]] in a note draws a line to a matching title.</p>
+    ${nodes.length ? `<svg class="map" viewBox="0 0 860 600">${lines}${dots}</svg>` : `<p class="empty">Dump a few notes and the map will have something to show.</p>`}`;
+}
+function searchView() {
+  const hits = searchHits(query);
+  const first = hits[0];
+  const linked = first ? linkedTo(first.id) : [];
+  const cards = hits.map((hit) => `<button type="button" class="card scraplink" data-map="${esc(hit.kind + ":" + hit.id)}"><strong>${esc(hit.title.slice(0, 140))}</strong><span class="muted"> ${esc(hit.why)}</span></button>`).join("");
+  const links = linked.map((hit) => `<button type="button" class="card scraplink" data-map="${esc(hit.kind + ":" + hit.id)}">${esc(hit.title.slice(0, 120))}<span class="muted"> · ${esc(hit.why)}</span></button>`).join("");
+  return `<p class="kicker">Search</p><h1>Find a note</h1>
+    <p class="sub">Words stack. Use "a phrase", #tag, or [[name]]. Linked notes sit under the first match.</p>
+    <input id="find" class="field" style="margin-top:14px" placeholder="Search notes" value="${esc(query)}" aria-label="Search notes">
+    <div class="stack" style="margin-top:14px">${hits.length ? cards : `<p class="empty">Nothing matches.</p>`}</div>
+    ${linked.length ? `<h2 style="font-family:var(--serif);font-weight:500;margin-top:18px">Connected</h2><div class="stack">${links}</div>` : ""}`;
+}
+
 function usageView() {
   return `<p class="kicker">Usage</p><h1>Allowance</h1>
     <p class="sub">Who organized notes, and how many tokens. Not their notes.</p>
@@ -608,7 +751,11 @@ async function compileNotes() {
   notice = "Organizing loose notes…";
   render();
   try {
-    const res = await fetch("/api/compile", { method: "POST" });
+    const res = await fetch("/api/compile", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ today: today() }),
+    });
     const body = await res.json();
     if (!res.ok) notice = body.error || "Could not organize.";
     else {
@@ -650,6 +797,9 @@ function bind() {
   const compile = document.getElementById("compile");
   if (compile) compile.onclick = () => { void compileNotes(); };
   if (view === "usage") void fillUsage();
+  document.querySelectorAll("[data-map]").forEach((btn) => {
+    btn.onclick = () => openNode(btn.dataset.map);
+  });
   const guide = document.getElementById("hide-guide");
   if (guide) guide.onclick = () => {
     localStorage.setItem(GUIDE, "1");

@@ -21,6 +21,6 @@ Redeploy after the variables are saved. Sign in, and only that Gmail can read th
 
 ## Organize
 
-Add a secret named `XAI_API_KEY` on the Pages project. Do not put the key in the page.
+**Organize loose notes** sorts on the page. It groups notes that share words, names, #tags, or a date. It does not call the API and does not spend tokens.
 
-Each account gets 50,000 tokens a week, reset Monday in Houston time. The meter sits next to the email. Set `WEEKLY_TOKENS` to change the cap. Usage lists token totals only, not note text.
+`[[a name]]` inside a note draws a line on the Map. Search accepts words, `"a phrase"`, `#tag`, and `[[name]]`.
