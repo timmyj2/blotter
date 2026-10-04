@@ -147,7 +147,7 @@ html[data-theme="dark"] #buddy .mouth{stroke:#e0a07e}
 <script>
 const KEY = "return-site-v1";
 const THEME = "return-site-theme";
-const GUIDE = "blotter-guide";
+const GUIDE = "blotter-guide-2";
 const blank = () => ({ scraps: [], threads: [], projects: [] });
 let db = load();
 let view = "now";
@@ -415,9 +415,9 @@ function guideCard() {
     <p class="kicker">First time</p>
     <h2 style="font-family:var(--serif);font-weight:500;margin:6px 0 10px">Dump first. Sort later.</h2>
     <p>Open <strong>Dump</strong> and write the thought, or drop a <strong>.md</strong> file. It does not need a project or a date yet.</p>
-    <p class="muted" style="margin-top:8px"><strong>Loose</strong> is the pile. Pick notes and give them a project or a day, or use <strong>Organize loose notes</strong> and it groups them for you.</p>
-    <p class="muted" style="margin-top:8px"><strong>Now</strong> is what is due this week. <strong>Calendar</strong> shows the days that have something on them.</p>
-    <p class="muted" style="margin-top:8px">The token line by your email is your weekly allowance. Your notes stay on this Google account.</p>
+    <p class="muted" style="margin-top:8px"><strong>Loose</strong> is the pile. Pick notes and give them a project or a day by hand, for free.</p>
+    <p class="muted" style="margin-top:8px"><strong>Organize loose notes</strong> uses AI. Each run spends tokens from the weekly allowance next to your email. Sorting by hand does not.</p>
+    <p class="muted" style="margin-top:8px"><strong>Now</strong> is what is due this week. <strong>Calendar</strong> shows the days that have something on them. Your notes stay on this Google account.</p>
     <div class="row" style="margin-top:12px"><button type="button" class="btn ink" id="hide-guide">Got it</button></div>
   </article>`;
 }
@@ -449,7 +449,7 @@ function nowView() {
        <div class="stack">${week.length ? week.map((item) => taskCard(item, false)).join("") : `<p class="empty">Nothing in the next 7 days.</p>`}</div>`;
   return `<p class="kicker">Now</p><h1>What’s due</h1>
     <p class="sub">${looseNotes().length} loose · ${undatedNotes().length} in a project with no date.</p>
-    ${account ? `<div class="row" style="margin-top:14px"><button type="button" class="btn ink" id="compile" ${compiling ? "disabled" : ""}>Organize loose notes</button></div>` : ""}
+    ${account ? `<div class="row" style="margin-top:14px"><button type="button" class="btn ink" id="compile" ${compiling ? "disabled" : ""}>Organize loose notes</button></div><p class="muted" style="margin-top:8px">Uses AI tokens from the weekly allowance. Sorting by hand does not.</p>` : ""}
     ${guideCard()}
     <input id="find" class="field" style="margin-top:14px" placeholder="Search notes" value="${esc(query)}" aria-label="Search notes">
     ${blocks}`;
