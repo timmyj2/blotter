@@ -72,7 +72,9 @@ textarea.field{min-height:7rem;resize:vertical}
 .week li{list-style:none;border-bottom:1px solid var(--line);padding:10px 0}
 .week button.link,.scraplink{border:0;background:none;text-align:left;min-height:44px;display:block;width:100%}
 .muted{color:var(--muted)}
-.top{display:flex;justify-content:flex-end;gap:8px;margin-bottom:8px;padding-right:84px}
+.top{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:8px;padding-right:84px}
+.who{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-right:auto;color:var(--muted);font-size:.85rem}
+.who a{text-decoration:underline;text-underline-offset:3px}
 #buddy{position:fixed;top:12px;right:12px;z-index:40;width:74px;height:74px;pointer-events:none;transform-origin:50% 80%;filter:drop-shadow(0 8px 14px rgba(28,25,21,.16))}
 #buddy .body{fill:#1c1915}
 #buddy .cheek{fill:#8c4a2f}
@@ -115,6 +117,7 @@ html[data-theme="dark"] #buddy .mouth{stroke:#e0a07e}
   </aside>
   <main>
     <div class="top">
+      <p id="who" class="who"></p>
       <div class="seg" id="theme">
         <button type="button" data-theme="light">Light</button>
         <button type="button" data-theme="dark">Dark</button>
@@ -153,24 +156,83 @@ let selected = new Set();
 let armed = "";
 let openScrap = "";
 let notice = "";
+let account = null;
+let offerBring = false;
+let saveTimer = 0;
 let month = startOfMonth(new Date());
 let picked = stamp(new Date());
 
+function normalize(raw) {
+  if (!raw || !Array.isArray(raw.scraps)) return blank();
+  raw.threads ||= [];
+  raw.projects ||= [];
+  for (const scrap of raw.scraps) {
+    scrap.targetDate ||= null;
+    scrap.done = !!scrap.done;
+  }
+  for (const thread of raw.threads) thread.done = !!thread.done;
+  return { scraps: raw.scraps, threads: raw.threads, projects: raw.projects };
+}
 function load() {
   try {
-    const raw = JSON.parse(localStorage.getItem(KEY) || "");
-    if (!raw || !Array.isArray(raw.scraps)) return blank();
-    raw.threads ||= [];
-    raw.projects ||= [];
-    for (const scrap of raw.scraps) {
-      scrap.targetDate ||= null;
-      scrap.done = !!scrap.done;
-    }
-    for (const thread of raw.threads) thread.done = !!thread.done;
-    return raw;
-  } catch { return blank(); }
+    return normalize(JSON.parse(localStorage.getItem(KEY) || ""));
+  } catch {
+    return blank();
+  }
 }
-function save() { localStorage.setItem(KEY, JSON.stringify(db)); }
+function save() {
+  if (account) {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => { void pushDesk(); }, 400);
+    return;
+  }
+  localStorage.setItem(KEY, JSON.stringify(db));
+}
+async function pushDesk() {
+  if (!account) return;
+  const res = await fetch("/api/desk", {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(db),
+  });
+  if (!res.ok) {
+    notice = "Could not save to this account.";
+    render();
+  }
+}
+function localHasNotes() {
+  const local = load();
+  return local.scraps.length + local.threads.length + local.projects.length > 0;
+}
+function paintAccount() {
+  const slot = document.getElementById("who");
+  if (!slot) return;
+  slot.replaceChildren();
+  if (!account) return;
+  const email = document.createElement("span");
+  email.textContent = account.email;
+  slot.append(email);
+  if (offerBring) {
+    const bring = document.createElement("button");
+    bring.type = "button";
+    bring.className = "btn";
+    bring.textContent = "Bring notes from this browser";
+    bring.onclick = () => { void bringLocal(); };
+    slot.append(bring);
+  }
+  const out = document.createElement("a");
+  out.href = account.logout;
+  out.textContent = "Sign out";
+  slot.append(out);
+}
+async function bringLocal() {
+  db = load();
+  offerBring = false;
+  await pushDesk();
+  localStorage.removeItem(KEY);
+  notice = "Those notes are on this account now.";
+  render();
+}
 function uid() { return crypto.randomUUID(); }
 function esc(s) {
   return String(s).replace(/[&<>"']/g, (c) => {
@@ -301,6 +363,7 @@ function render() {
     line.hidden = !notice;
     line.textContent = notice;
   }
+  paintAccount();
   bind();
 }
 
@@ -707,7 +770,34 @@ addEventListener("drop", (event) => {
   if (files.length) void takeFiles(files);
 });
 
-render();
+document.getElementById("view").innerHTML = `<p class="sub">Opening…</p>`;
+start();
+
+async function start() {
+  try {
+    const me = await fetch("/api/me");
+    const info = me.ok ? await me.json() : null;
+    if (info?.email) {
+      const deskRes = await fetch("/api/desk");
+      if (deskRes.ok) {
+        account = info;
+        const remote = normalize(await deskRes.json());
+        const remoteHas = remote.scraps.length + remote.threads.length + remote.projects.length > 0;
+        if (remoteHas) db = remote;
+        else {
+          db = blank();
+          offerBring = localHasNotes();
+        }
+        render();
+        return;
+      }
+      if (deskRes.status !== 401) notice = "Signed in, but notes are not connected to the account yet.";
+    }
+  } catch {
+    /* keep this browser's notes */
+  }
+  render();
+}
 </script>
 </body>
 </html>
