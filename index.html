@@ -100,8 +100,14 @@ dialog li strong{font-weight:600}
 .map text{font-size:11px;fill:var(--ink);pointer-events:none}
 #drop{position:fixed;inset:12px;z-index:30;display:grid;place-items:center;border:2px dashed var(--clay);border-radius:20px;background:color-mix(in srgb,var(--paper) 90%,transparent);font-family:var(--serif);font-size:clamp(1.4rem,4vw,2rem);text-align:center;padding:24px;pointer-events:none}
 #drop[hidden]{display:none}
-.file{position:relative}
-.file input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.file{position:relative;display:inline-flex;align-items:center;justify-content:center;width:auto;flex:0 0 auto;overflow:hidden;white-space:nowrap}
+.file input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer;font-size:0}
+.row .due{width:auto;flex:0 1 11rem}
+.hash{color:var(--clay);font-weight:600;background:color-mix(in srgb,var(--clay) 16%,transparent);border-radius:999px;padding:0 .35em}
+.composer{position:relative;padding:0;overflow:hidden}
+.composer .mirror{position:absolute;inset:0;margin:0;padding:10px 12px;overflow:hidden;pointer-events:none;white-space:pre-wrap;word-break:break-word;color:var(--ink);font:inherit;line-height:1.5}
+.composer textarea{position:relative;display:block;width:100%;min-height:7rem;border:0;background:transparent;color:transparent;caret-color:var(--ink);resize:vertical;padding:10px 12px;line-height:1.5}
+.composer textarea::placeholder{color:var(--muted)}
 @media(min-width:800px){
   .app{flex-direction:row}
   aside{width:250px;border-bottom:0;border-right:1px solid var(--line);padding:22px 14px}
@@ -321,6 +327,24 @@ function addDays(day, n) {
   d.setDate(d.getDate() + n);
   return stamp(d);
 }
+function dueWhen(kind, picked) {
+  if (kind === "today") return today();
+  if (kind === "tomorrow") return addDays(today(), 1);
+  if (kind === "friday") return addDays(today(), (5 - new Date().getDay() + 7) % 7);
+  if (kind === "week") return addDays(today(), 7);
+  if (kind === "pick") return picked || null;
+  return null;
+}
+function rich(text) {
+  return esc(text).replace(/(^|\s)(#[A-Za-z][\w-]{0,40})/g, '$1<span class="hash">$2</span>');
+}
+const TEMPLATES = {
+  quick: "#quick\n",
+  meeting: "#meeting\nWho:\nAbout:\nDecided:\nNext:\n",
+  decision: "#decision\nCall:\nWhy:\nOwner:\n",
+  follow: "#followup\nWho:\nNeed:\n",
+  idea: "#idea\nWorth it because:\n",
+};
 function looseNotes() {
   return db.scraps.filter((s) => !s.threadId && !s.done && !s.projectId && !s.targetDate);
 }
@@ -435,22 +459,41 @@ function render() {
 function dumpView() {
   const recent = db.scraps.slice(0, 5);
   return `<p class="kicker">Dump</p><h1>Put it down.</h1>
-    <p class="sub">One scrap. No project, no date. Or drop a .md or .txt file.</p>
+    <p class="sub">Pick a shape or just type. Ctrl+Enter keeps it. A #tag shows in clay.</p>
+    <div class="row" id="templates">
+      <button type="button" class="btn" data-template="quick">Quick</button>
+      <button type="button" class="btn" data-template="meeting">Meeting</button>
+      <button type="button" class="btn" data-template="decision">Decision</button>
+      <button type="button" class="btn" data-template="follow">Follow-up</button>
+      <button type="button" class="btn" data-template="idea">Idea</button>
+    </div>
     <form id="dump" class="stack">
-      <textarea class="field" name="text" aria-label="Scrap" placeholder="What’s on your mind" required></textarea>
+      <div class="field composer">
+        <pre class="mirror" id="mirror" aria-hidden="true"></pre>
+        <textarea name="text" aria-label="Scrap" placeholder="What’s on your mind" required></textarea>
+      </div>
       <div class="row">
+        <select class="field due" id="due" aria-label="Due date">
+          <option value="">No date</option>
+          <option value="today">Today</option>
+          <option value="tomorrow">Tomorrow</option>
+          <option value="friday">Friday</option>
+          <option value="week">Next week</option>
+          <option value="pick">Pick a day</option>
+        </select>
+        <input class="field due" id="due-pick" type="date" aria-label="Pick a due date" hidden>
         <button class="btn ink" type="submit">Keep it</button>
         <button class="btn" type="button" id="due-today">Due today</button>
         <label class="btn file">Open a file<input id="file" type="file" accept=".md,.markdown,.txt,.text,text/markdown,text/plain" multiple></label>
       </div>
     </form>
-    ${recent.length ? `<div class="stack">${recent.map((s) => `<article class="card"><p>${esc(s.text)}</p></article>`).join("")}</div>` : `<p class="empty">Nothing here yet.</p>`}`;
+    ${recent.length ? `<div class="stack">${recent.map((s) => `<article class="card"><p>${rich(s.text)}</p></article>`).join("")}</div>` : `<p class="empty">Nothing here yet.</p>`}`;
 }
 
 function clip(text, id) {
   const open = openScrap === id;
   const shown = !open && text.length > 90 ? text.slice(0, 72).trim() + "…" : text;
-  return `<button type="button" class="read" data-read="${esc(id)}">${esc(shown)}</button>`;
+  return `<button type="button" class="read" data-read="${esc(id)}">${rich(shown)}</button>`;
 }
 function taskCard(item, late) {
   const tag = item.projectId ? "#" + projectName(item.projectId) : "";
@@ -555,7 +598,7 @@ function placeView(mode) {
     return `<article class="card note">
       <label class="check"><input type="checkbox" data-id="${esc(s.id)}" ${selected.has(s.id)?"checked":""} aria-label="Select scrap"></label>
       <div class="body">
-        <h2><button type="button" class="read" data-read="${esc(s.id)}">${esc(title)}</button></h2>
+        <h2><button type="button" class="read" data-read="${esc(s.id)}">${rich(title)}</button></h2>
         <div class="meta"><span>${esc(when(s.createdAt))}</span>${ageDays(s.createdAt) >= 2 ? `<span>${ageDays(s.createdAt)} days</span>` : ""}${tag?`<span>${esc(tag)}</span>`:""}<button type="button" data-remove="${esc(s.id)}">${armed===s.id?"Remove it":"Remove"}</button></div>
       </div>
     </article>`;
@@ -594,7 +637,7 @@ function calendarView() {
     const body = due.length ? due.map((item) => {
       const label = item.title.length > 80 ? item.title.slice(0, 64).trim() + "…" : item.title;
       const open = item.kind === "thread" ? ` data-thread="${esc(item.id)}"` : "";
-      return `<div class="row"><button type="button" class="scraplink"${open}>${esc(label)}</button><button class="btn" type="button" data-done="${item.kind}:${esc(item.id)}">Done</button></div>`;
+      return `<div class="row"><button type="button" class="scraplink"${open}>${rich(label)}</button><button class="btn" type="button" data-done="${item.kind}:${esc(item.id)}">Done</button></div>`;
     }).join("") : `<p class="muted">—</p>`;
     rows.push(`<li><strong>${day.toLocaleDateString(undefined,{weekday:"short"})} ${day.getDate()}</strong>${body}</li>`);
   }
@@ -626,7 +669,7 @@ function threadView() {
       <input class="field" name="next" aria-label="Next move" placeholder="Next move" value="${esc(thread.next||"")}">
       <div class="row"><button class="btn ink" type="submit">Save</button><button class="btn" type="button" id="mark-thread">${thread.done?"Bring back":"Done"}</button><button class="btn" type="button" id="untie">Untie all</button></div>
     </form>
-    <div class="stack">${scraps.map((s)=>`<article class="card"><p>${esc(s.text)}</p></article>`).join("")}</div>`;
+    <div class="stack">${scraps.map((s)=>`<article class="card"><p>${rich(s.text)}</p></article>`).join("")}</div>`;
 }
 
 function projectView() {
@@ -638,9 +681,9 @@ function projectView() {
   const finished = db.scraps.filter((s) => s.projectId === project.id && !s.threadId && s.done);
   return `<p class="kicker">Project</p><h1>${esc(project.name)}</h1>
     <div class="stack">${threads.map((t)=>`<button type="button" class="card scraplink" data-thread="${esc(t.id)}">${esc(t.title)}${t.targetDate?` · ${esc(t.targetDate)}`:""}</button>`).join("")}
-    ${pinned.map((s)=>`<article class="card"><p>${esc(s.text)}</p>${s.targetDate?`<p class="muted">${esc(s.targetDate)}</p>`:""}</article>`).join("")}
+    ${pinned.map((s)=>`<article class="card"><p>${rich(s.text)}</p>${s.targetDate?`<p class="muted">${esc(s.targetDate)}</p>`:""}</article>`).join("")}
     ${!threads.length && !pinned.length ? `<p class="empty">Nothing open in this project.</p>` : ""}</div>
-    ${(finishedThreads.length || finished.length) ? `<h2 style="font-family:var(--serif);font-weight:500;margin-top:22px">Done</h2><div class="stack">${finishedThreads.map((t)=>`<article class="card done"><button type="button" class="scraplink" data-thread="${esc(t.id)}">${esc(t.title)}</button><button class="btn" type="button" data-undo="thread:${esc(t.id)}">Bring back</button></article>`).join("")}${finished.map((s)=>`<article class="card done"><p>${esc(s.text)}</p><button class="btn" type="button" data-undo="scrap:${esc(s.id)}">Bring back</button></article>`).join("")}</div>` : ""}`;
+    ${(finishedThreads.length || finished.length) ? `<h2 style="font-family:var(--serif);font-weight:500;margin-top:22px">Done</h2><div class="stack">${finishedThreads.map((t)=>`<article class="card done"><button type="button" class="scraplink" data-thread="${esc(t.id)}">${esc(t.title)}</button><button class="btn" type="button" data-undo="thread:${esc(t.id)}">Bring back</button></article>`).join("")}${finished.map((s)=>`<article class="card done"><p>${rich(s.text)}</p><button class="btn" type="button" data-undo="scrap:${esc(s.id)}">Bring back</button></article>`).join("")}</div>` : ""}`;
 }
 
 function when(iso) {
@@ -788,8 +831,8 @@ function searchView() {
   const hits = searchHits(query);
   const first = hits[0];
   const linked = first ? linkedTo(first.id) : [];
-  const cards = hits.map((hit) => `<button type="button" class="card scraplink" data-map="${esc(hit.kind + ":" + hit.id)}"><strong>${esc(hit.title.slice(0, 140))}</strong><span class="muted"> ${esc(hit.why)}</span></button>`).join("");
-  const links = linked.map((hit) => `<button type="button" class="card scraplink" data-map="${esc(hit.kind + ":" + hit.id)}">${esc(hit.title.slice(0, 120))}<span class="muted"> · ${esc(hit.why)}</span></button>`).join("");
+  const cards = hits.map((hit) => `<button type="button" class="card scraplink" data-map="${esc(hit.kind + ":" + hit.id)}"><strong>${rich(hit.title.slice(0, 140))}</strong><span class="muted"> ${esc(hit.why)}</span></button>`).join("");
+  const links = linked.map((hit) => `<button type="button" class="card scraplink" data-map="${esc(hit.kind + ":" + hit.id)}">${rich(hit.title.slice(0, 120))}<span class="muted"> · ${esc(hit.why)}</span></button>`).join("");
   return `<p class="kicker">Search</p><h1>Find a note</h1>
     <p class="sub">Words stack. Use "a phrase", #tag, or [[name]]. Linked notes sit under the first match.</p>
     <input id="find" class="field" style="margin-top:14px" placeholder="Search notes" value="${esc(query)}" aria-label="Search notes">
@@ -861,14 +904,42 @@ function bind() {
   if (closeHelp && help) closeHelp.onclick = () => help.close();
   if (help) help.onclick = (event) => { if (event.target === help) help.close(); };
   const dump = document.getElementById("dump");
-  if (dump) dump.onsubmit = (e) => {
-    e.preventDefault();
-    const text = new FormData(dump).get("text").toString().trim();
-    if (!text) return;
-    db.scraps.unshift({ id: uid(), text, createdAt: new Date().toISOString(), threadId: null, projectId: null, targetDate: null, done: false });
-    save();
-    render();
-  };
+  if (dump) {
+    const box = dump.querySelector("textarea");
+    const mirror = document.getElementById("mirror");
+    const due = document.getElementById("due");
+    const pick = document.getElementById("due-pick");
+    const paint = () => { if (mirror && box) mirror.innerHTML = rich(box.value + "\n"); };
+    const templates = document.getElementById("templates");
+    if (templates && box) templates.onclick = (event) => {
+      const key = event.target.dataset.template;
+      if (!TEMPLATES[key]) return;
+      const current = box.value.trim();
+      box.value = current ? current + "\n\n" + TEMPLATES[key] : TEMPLATES[key];
+      box.focus();
+      box.setSelectionRange(box.value.length, box.value.length);
+      paint();
+    };
+    if (box) {
+      box.oninput = paint;
+      box.onscroll = () => { if (mirror) mirror.scrollTop = box.scrollTop; };
+      box.onkeydown = (event) => {
+        if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+          event.preventDefault();
+          dump.requestSubmit();
+        }
+      };
+    }
+    if (due && pick) due.onchange = () => { pick.hidden = due.value !== "pick"; if (!pick.hidden) pick.focus(); };
+    dump.onsubmit = (e) => {
+      e.preventDefault();
+      const text = new FormData(dump).get("text").toString().trim();
+      if (!text) return;
+      db.scraps.unshift({ id: uid(), text, createdAt: new Date().toISOString(), threadId: null, projectId: null, targetDate: dueWhen(due?.value || "", pick?.value || ""), done: false });
+      save();
+      render();
+    };
+  }
   const file = document.getElementById("file");
   if (file) file.onchange = () => {
     const picked = [...file.files];
