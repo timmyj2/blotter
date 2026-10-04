@@ -23,7 +23,9 @@ async function certs(iss) {
 
 export function logoutUrl(env) {
   const iss = teamIssuer(env);
-  return iss ? `${iss}/cdn-cgi/access/logout` : "/";
+  if (!iss) return "/";
+  const back = encodeURIComponent("https://blotters.pages.dev/");
+  return `${iss}/cdn-cgi/access/logout?returnTo=${back}`;
 }
 
 export async function emailFromAccess(request, env) {
