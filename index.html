@@ -112,6 +112,44 @@ dialog li strong{font-weight:600}
   .tags button.on{background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--ink)}
   main{padding:28px}
 }
+.mark{transition:color .25s}
+.mark i{transition:transform .45s cubic-bezier(.2,.85,.2,1)}
+.mark:hover{color:var(--clay)}
+.mark:hover i{transform:rotate(-14deg) scale(1.12)}
+nav button,nav a.navbtn,.tags button,.btn,.seg button,.day,.card,.week li,.scraplink,.read,.meta button,.who a{
+  transition:transform .28s cubic-bezier(.2,.8,.2,1), background .22s, color .22s, border-color .22s, box-shadow .28s, padding .25s, background-size .3s;
+}
+nav button:hover:not(.on),nav a.navbtn:hover{transform:translateX(8px);color:var(--ink);background:color-mix(in srgb,var(--clay) 16%,transparent)}
+.tags button:hover:not(:disabled):not(.on){transform:translateY(-3px);border-color:var(--clay);color:var(--ink)}
+.btn:hover{transform:translateY(-3px);box-shadow:0 10px 18px rgba(28,25,21,.12)}
+.btn:active{transform:translateY(0) scale(.97)}
+.btn.ink:hover{background:var(--clay);border-color:var(--clay)}
+.seg button:hover:not(.on){color:var(--ink);background:color-mix(in srgb,var(--clay) 18%,transparent)}
+.card{background:var(--sheet);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.card:hover{transform:translateY(-5px) rotate(-.35deg);border-color:color-mix(in srgb,var(--clay) 60%,var(--line));box-shadow:0 16px 30px rgba(28,25,21,.1)}
+.day:hover:not(.on){transform:scale(1.12);background:color-mix(in srgb,var(--clay) 18%,transparent)}
+.day.on:hover{transform:scale(1.08)}
+.dots i{transition:transform .2s}
+.day:hover .dots i{transform:scale(1.35)}
+.week li:hover{padding-left:10px;background:color-mix(in srgb,var(--clay) 9%,transparent)}
+.scraplink,.read{
+  background-image:linear-gradient(var(--clay),var(--clay));
+  background-repeat:no-repeat;
+  background-position:left bottom;
+  background-size:0 2px;
+}
+.scraplink:hover,.read:hover,.meta button:hover,.who a:hover{background-size:100% 2px;color:var(--clay)}
+.field,select.field,textarea.field{transition:border-color .2s, box-shadow .2s}
+.field:hover,select.field:hover,textarea.field:hover{border-color:color-mix(in srgb,var(--clay) 55%,var(--line))}
+.field:focus,select.field:focus,textarea.field:focus{outline:none;border-color:var(--clay);box-shadow:0 0 0 3px color-mix(in srgb,var(--clay) 28%,transparent)}
+.map g{transform-box:fill-box;transform-origin:center;transition:transform .22s cubic-bezier(.2,.8,.2,1)}
+.map g:hover{transform:scale(1.35)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.wrap > *{animation:rise .4s cubic-bezier(.2,.8,.2,1) both}
+@media(prefers-reduced-motion:reduce){
+  .wrap > *{animation:none}
+  .mark i,nav button,.tags button,.btn,.day,.card,.map g{transition:none}
+}
 </style>
 </head>
 <body>
