@@ -90,6 +90,11 @@ html[data-theme="dark"] #buddy .mouth{stroke:#e0a07e}
 .seg button{min-height:36px;border:0;border-radius:999px;background:transparent;color:var(--muted);padding:0 12px}
 .seg button.on{background:var(--ink);color:var(--paper)}
 .empty{color:var(--muted);margin-top:16px}
+dialog{border:1px solid var(--line);border-radius:18px;background:var(--sheet);color:var(--ink);max-width:36rem;width:calc(100% - 32px);padding:22px 22px 18px}
+dialog::backdrop{background:rgba(28,25,21,.4)}
+dialog h2{font-family:var(--serif);font-weight:500;font-size:1.7rem;margin:4px 0 12px}
+dialog li{margin:8px 0}
+dialog li strong{font-weight:600}
 .map{width:100%;height:min(72vh,640px);border:1px solid var(--line);border-radius:18px;background:var(--sheet)}
 .map button{cursor:pointer}
 .map text{font-size:11px;fill:var(--ink);pointer-events:none}
@@ -121,6 +126,7 @@ html[data-theme="dark"] #buddy .mouth{stroke:#e0a07e}
   <main>
     <div class="top">
       <p id="who" class="who"></p>
+      <button type="button" class="btn" id="open-help">How to</button>
       <div class="seg" id="theme">
         <button type="button" data-theme="light">Light</button>
         <button type="button" data-theme="dark">Dark</button>
@@ -131,6 +137,19 @@ html[data-theme="dark"] #buddy .mouth{stroke:#e0a07e}
   </main>
 </div>
 <div id="drop" hidden>Drop a markdown or text file</div>
+<dialog id="howto">
+  <p class="kicker">How to</p>
+  <h2>Dump first. Sort later.</h2>
+  <ol>
+    <li><strong>Dump</strong> is where a thought goes. Keep it with no date, or press <strong>Due today</strong> so it shows up on Now. You can also drop a .md or .txt file.</li>
+    <li><strong>Loose</strong> is the unsorted pile. Pick a note and give it a project, a date, or both. A note sitting a week gets called out on Now.</li>
+    <li><strong>Organize loose notes</strong> groups notes that share words, a name, a #tag, or a date. <strong>Undo the last sort</strong> puts them back.</li>
+    <li><strong>Now</strong> leads with the one thing to do next, then the rest of the week. <strong>Calendar</strong> shows which days have something on them.</li>
+    <li><strong>Map</strong> draws the links. Type <strong>[[a name]]</strong> in a note to connect it to a matching title. <strong>Search</strong> takes words, "a phrase", #tag, or [[name]], and lists what that note connects to.</li>
+    <li>Your notes stay on this Google account. Another person on the list cannot open them.</li>
+  </ol>
+  <div class="row" style="margin-top:14px"><button type="button" class="btn ink" id="close-help">Close</button></div>
+</dialog>
 <div id="buddy" aria-hidden="true">
   <svg viewBox="0 0 80 84" width="74" height="78">
     <path class="body" d="M40 6c16 1 28 10 29 24 1 10-3 16-2 24 1 9-6 18-16 22-6 2-8 6-11 8-3-2-6-6-12-8-11-4-18-13-17-23-1-8-4-14-2-24C11 16 24 5 40 6z"/>
@@ -414,7 +433,7 @@ function guideCard() {
     <p class="muted" style="margin-top:8px"><strong>Loose</strong> is the pile. Pick notes and give them a project or a day by hand.</p>
     <p class="muted" style="margin-top:8px"><strong>Organize loose notes</strong> sorts on the page. It looks for dates, names, #tags, and notes that share words.</p>
     <p class="muted" style="margin-top:8px">Type <strong>[[a name]]</strong> inside a note to draw a line. <strong>Map</strong> shows those lines. <strong>Search</strong> finds the note and what it connects to.</p>
-    <p class="muted" style="margin-top:8px"><strong>Now</strong> is what is due this week. <strong>Calendar</strong> shows the days that have something on them. Your notes stay on this Google account.</p>
+    <p class="muted" style="margin-top:8px"><strong>How to</strong> stays in the top corner if you want this again.</p>
     <div class="row" style="margin-top:12px"><button type="button" class="btn ink" id="hide-guide">Got it</button></div>
   </article>`;
 }
@@ -797,6 +816,12 @@ function bind() {
     localStorage.setItem(GUIDE, "1");
     render();
   };
+  const openHelp = document.getElementById("open-help");
+  const help = document.getElementById("howto");
+  if (openHelp && help) openHelp.onclick = () => { if (!help.open) help.showModal(); };
+  const closeHelp = document.getElementById("close-help");
+  if (closeHelp && help) closeHelp.onclick = () => help.close();
+  if (help) help.onclick = (event) => { if (event.target === help) help.close(); };
   const dump = document.getElementById("dump");
   if (dump) dump.onsubmit = (e) => {
     e.preventDefault();
