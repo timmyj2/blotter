@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Blotter · Tim's tool-belt</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<meta name="description" content="Dump scraps, tie them to a project, and see what is due. Saved in this browser. No Grok on this page.">
+<meta name="description" content="Dump scraps, tie them to a project, and see what is due. Each Google account keeps its own notes.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600&family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,500&display=swap" rel="stylesheet">
@@ -147,6 +147,7 @@ html[data-theme="dark"] #buddy .mouth{stroke:#e0a07e}
 <script>
 const KEY = "return-site-v1";
 const THEME = "return-site-theme";
+const GUIDE = "blotter-guide";
 const blank = () => ({ scraps: [], threads: [], projects: [] });
 let db = load();
 let view = "now";
@@ -408,6 +409,19 @@ function taskCard(item, late) {
   </article>`;
 }
 
+function guideCard() {
+  if (localStorage.getItem(GUIDE)) return "";
+  return `<article class="card panel" style="margin-top:16px">
+    <p class="kicker">First time</p>
+    <h2 style="font-family:var(--serif);font-weight:500;margin:6px 0 10px">Dump first. Sort later.</h2>
+    <p>Open <strong>Dump</strong> and write the thought, or drop a <strong>.md</strong> file. It does not need a project or a date yet.</p>
+    <p class="muted" style="margin-top:8px"><strong>Loose</strong> is the pile. Pick notes and give them a project or a day, or use <strong>Organize loose notes</strong> and it groups them for you.</p>
+    <p class="muted" style="margin-top:8px"><strong>Now</strong> is what is due this week. <strong>Calendar</strong> shows the days that have something on them.</p>
+    <p class="muted" style="margin-top:8px">The token line by your email is your weekly allowance. Your notes stay on this Google account.</p>
+    <div class="row" style="margin-top:12px"><button type="button" class="btn ink" id="hide-guide">Got it</button></div>
+  </article>`;
+}
+
 function nowView() {
   const start = today();
   const end = addDays(start, 6);
@@ -436,6 +450,7 @@ function nowView() {
   return `<p class="kicker">Now</p><h1>What’s due</h1>
     <p class="sub">${looseNotes().length} loose · ${undatedNotes().length} in a project with no date.</p>
     ${account ? `<div class="row" style="margin-top:14px"><button type="button" class="btn ink" id="compile" ${compiling ? "disabled" : ""}>Organize loose notes</button></div>` : ""}
+    ${guideCard()}
     <input id="find" class="field" style="margin-top:14px" placeholder="Search notes" value="${esc(query)}" aria-label="Search notes">
     ${blocks}`;
 }
@@ -635,6 +650,11 @@ function bind() {
   const compile = document.getElementById("compile");
   if (compile) compile.onclick = () => { void compileNotes(); };
   if (view === "usage") void fillUsage();
+  const guide = document.getElementById("hide-guide");
+  if (guide) guide.onclick = () => {
+    localStorage.setItem(GUIDE, "1");
+    render();
+  };
   const dump = document.getElementById("dump");
   if (dump) dump.onsubmit = (e) => {
     e.preventDefault();
