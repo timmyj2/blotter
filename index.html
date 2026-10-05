@@ -119,11 +119,12 @@
 <script>
 (async () => {
   try {
-    const [ra, rb, rm, rp] = await Promise.all([
+    const [ra, rb, rm, rp, rn] = await Promise.all([
       fetch("/blotter-app.a.b64"),
       fetch("/blotter-app.b.b64"),
       fetch("/map-view.js"),
       fetch("/projects-view.js"),
+      fetch("/now-view.js"),
     ]);
     if (!ra.ok || !rb.ok) throw new Error("missing app");
     const b64 = ((await ra.text()) + (await rb.text())).replace(/\s+/g, "");
@@ -156,6 +157,13 @@
           'else if (view === "calendar") root.innerHTML = calendarView();\n  else if (view === "projects") root.innerHTML = projectsView();'
         );
         text = text.replace("\nfunction bind() {", "\n" + projects + "\nfunction bind() {\n  bindProjects();");
+      }
+    }
+    if (rn.ok) {
+      const nowPatch = (await rn.text()).trim();
+      if (nowPatch.startsWith("function nowView")) {
+        const swapped = text.replace(/function nowView\(\) \{[\s\S]*?\n\}(?=\n\nfunction placeView)/, nowPatch);
+        if (swapped !== text) text = swapped;
       }
     }
     (0, eval)(text);
