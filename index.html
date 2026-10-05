@@ -85,14 +85,21 @@
 <script>
 (async () => {
   try {
-    const [ra, rb] = await Promise.all([
+    const [ra, rb, rm] = await Promise.all([
       fetch("/blotter-app.a.b64"),
       fetch("/blotter-app.b.b64"),
+      fetch("/map-view.js"),
     ]);
     if (!ra.ok || !rb.ok) throw new Error("missing app");
     const b64 = ((await ra.text()) + (await rb.text())).replace(/\s+/g, "");
     const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-    const text = await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
+    let text = await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
+    if (rm.ok) {
+      const patch = (await rm.text()).trim();
+      if (patch.startsWith("function mapView")) {
+        text = text.replace(/function mapView\(\) \{[\s\S]*?(?=\nfunction searchView)/, patch + "\n");
+      }
+    }
     (0, eval)(text);
   } catch (err) {
     const view = document.getElementById("view");
