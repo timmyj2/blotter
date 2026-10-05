@@ -45,7 +45,7 @@ function applyPlan(desk, plan, allowedIds) {
     desk.threads.unshift({
       id,
       title: String(thread.title || "").trim().slice(0, 140) || "Untitled",
-      why: "Sorted from shared words, names, and dates.",
+      why: String(thread.why || "Same subject.").slice(0, 160),
       projectId,
       targetDate: date,
       scrapIds: ids,

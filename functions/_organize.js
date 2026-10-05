@@ -99,27 +99,24 @@ function readNote(scrap, projects, today) {
   const text = String(scrap.text || "");
   const tags = hashtags(text);
   const names = people(text);
-  const keys = keywords(text);
+  const keys = keywords(text).filter((word) => word.length >= 5);
   const links = wikis(text).map((link) => link.toLowerCase());
   const known = projects.map((project) => project.name).filter((name) => name.length > 2 && text.toLowerCase().includes(name.toLowerCase()));
   return { id: scrap.id, text, tags, names, keys, links, known, day: pickDate(datesIn(text, today)) };
 }
 
-function score(a, b) {
-  let points = 0;
-  const sharedKeys = a.keys.filter((key) => b.keys.includes(key));
-  points += Math.min(6, sharedKeys.length * 2);
-  if (a.tags.some((tag) => b.tags.includes(tag))) points += 5;
-  if (a.names.some((name) => b.names.includes(name))) points += 4;
-  if (a.day && a.day === b.day) points += 3;
-  if (a.known.some((name) => b.known.some((other) => other.toLowerCase() === name.toLowerCase()))) points += 4;
-  if (a.links.some((link) => b.text.toLowerCase().includes(link)) || b.links.some((link) => a.text.toLowerCase().includes(link))) points += 6;
-  return points;
-}
-
-function parent(parents, id) {
-  if (parents.get(id) !== id) parents.set(id, parent(parents, parents.get(id)));
-  return parents.get(id);
+function reasonsFor(note, wordCounts, total) {
+  const reasons = [];
+  for (const tag of note.tags) reasons.push({ key: "tag:" + tag, rank: 1, title: titleCase(tag), project: titleCase(tag), why: `Same tag #${tag}` });
+  for (const name of note.names) reasons.push({ key: "person:" + name, rank: 2, title: titleCase(name), project: titleCase(name), why: `Same name ${titleCase(name)}` });
+  for (const link of note.links) reasons.push({ key: "link:" + link, rank: 2, title: titleCase(link), project: titleCase(link), why: `Same link [[${link}]]` });
+  for (const name of note.known) reasons.push({ key: "project:" + name.toLowerCase(), rank: 3, title: name, project: name, why: `Same project ${name}` });
+  for (const word of note.keys) {
+    const count = wordCounts.get(word) || 0;
+    if (count < 2 || count > Math.max(4, Math.ceil(total * 0.45))) continue;
+    reasons.push({ key: "word:" + word, rank: 4, title: titleCase(word), project: "", why: `Same word ${word}` });
+  }
+  return reasons;
 }
 
 export function planDesk(desk, today) {
@@ -129,41 +126,41 @@ export function planDesk(desk, today) {
     .filter((scrap) => scrap && !scrap.done && !scrap.threadId && !scrap.projectId && !scrap.targetDate)
     .slice(0, 80)
     .map((scrap) => readNote(scrap, projects, day));
-  const parents = new Map(notes.map((note) => [note.id, note.id]));
-  for (let i = 0; i < notes.length; i++) {
-    for (let j = i + 1; j < notes.length; j++) {
-      if (score(notes[i], notes[j]) < 4) continue;
-      const left = parent(parents, notes[i].id);
-      const right = parent(parents, notes[j].id);
-      if (left !== right) parents.set(right, left);
-    }
-  }
-  const groups = new Map();
+  const wordCounts = new Map();
+  for (const note of notes) for (const word of note.keys) wordCounts.set(word, (wordCounts.get(word) || 0) + 1);
+  const buckets = new Map();
   for (const note of notes) {
-    const key = parent(parents, note.id);
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(note);
-  }
-  const threads = [];
-  const places = [];
-  for (const group of groups.values()) {
-    const tag = mode(group.flatMap((note) => note.tags));
-    const person = mode(group.flatMap((note) => note.names));
-    const known = mode(group.flatMap((note) => note.known.map((name) => name.toLowerCase())));
-    const word = mode(group.flatMap((note) => note.keys));
-    const project = known ? titleCase(known) : tag ? titleCase(tag) : person ? titleCase(person) : "";
-    const when = mode(group.map((note) => note.day).filter(Boolean));
-    if (group.length >= 2) {
-      const label = project || (word ? titleCase(word) : group[0].text.trim().slice(0, 60));
-      threads.push({
-        title: label.slice(0, 140) || "Untitled",
-        project,
-        targetDate: when || null,
-        scrapIds: group.map((note) => note.id),
-      });
-    } else if (project || when) {
-      places.push({ scrapId: group[0].id, project, targetDate: when || null });
+    for (const reason of reasonsFor(note, wordCounts, notes.length)) {
+      if (!buckets.has(reason.key)) buckets.set(reason.key, { ...reason, notes: [] });
+      buckets.get(reason.key).notes.push(note);
     }
+  }
+  const ordered = [...buckets.values()]
+    .filter((bucket) => bucket.notes.length >= 2)
+    .sort((a, b) => a.rank - b.rank || b.notes.length - a.notes.length || a.key.localeCompare(b.key));
+  const used = new Set();
+  const threads = [];
+  for (const bucket of ordered) {
+    const group = bucket.notes.filter((note) => !used.has(note.id));
+    if (group.length < 2) continue;
+    group.forEach((note) => used.add(note.id));
+    const when = mode(group.map((note) => note.day).filter(Boolean));
+    threads.push({
+      title: bucket.title.slice(0, 140),
+      project: bucket.project,
+      targetDate: when || null,
+      scrapIds: group.map((note) => note.id),
+      why: bucket.why,
+    });
+  }
+  const places = [];
+  for (const note of notes) {
+    if (used.has(note.id)) continue;
+    const tag = note.tags[0] ? titleCase(note.tags[0]) : "";
+    const person = note.names[0] ? titleCase(note.names[0]) : "";
+    const known = note.known[0] || "";
+    const project = known || tag || person;
+    if (project || note.day) places.push({ scrapId: note.id, project, targetDate: note.day });
   }
   return { threads: threads.slice(0, 20), places: places.slice(0, 40) };
 }

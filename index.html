@@ -24,22 +24,22 @@ button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 a{color:inherit;text-decoration:none}
 .app{display:flex;min-height:100vh;flex-direction:column}
-aside{background:var(--sheet);border-bottom:1px solid var(--line);padding:16px}
+aside{background:var(--sheet);border-bottom:1px solid var(--line);padding:10px 12px 8px}
 .brand{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.mark{display:flex;align-items:center;gap:10px;font-family:var(--serif);font-size:1.6rem}
-.mark i{display:grid;width:34px;height:34px;place-items:center;border-radius:50%;background:var(--ink);color:var(--paper);font-style:italic}
-nav{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
-nav button,nav a.navbtn{min-height:44px;border:0;border-radius:12px;background:transparent;color:var(--muted);padding:0 10px;white-space:nowrap}
+.mark{display:flex;align-items:center;gap:8px;font-family:var(--serif);font-size:1.25rem}
+.mark i{display:grid;width:28px;height:28px;place-items:center;border-radius:50%;background:var(--ink);color:var(--paper);font-style:italic}
+nav{display:flex;flex-wrap:wrap;gap:2px;margin-top:6px}
+nav button,nav a.navbtn{min-height:36px;border:0;border-radius:8px;background:transparent;color:var(--muted);padding:0 8px;white-space:nowrap;font-size:.92rem}
 nav button.on{background:var(--ink);color:var(--paper)}
 .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
 .tags p{width:100%;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .tags button{min-height:40px;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;padding:0 12px}
 .tags button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .read{border:0;background:none;text-align:left;font-weight:600;width:100%;min-height:44px}
-main{flex:1;padding:22px 16px 48px}
+main{flex:1;padding:12px 14px 40px}
 .wrap{max-width:40rem;margin:0 auto}
-.kicker{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-h1{font-family:var(--serif);font-weight:500;font-size:clamp(2rem,6vw,3rem);line-height:1.05;margin:6px 0 10px}
+.kicker{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--serif);font-weight:500;font-size:clamp(1.55rem,3.5vw,2.15rem);line-height:1.08;margin:2px 0 6px}
 .sub{color:var(--muted);max-width:38ch}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .field,select.field,textarea.field{width:100%;min-height:44px;border:1px solid var(--line);background:var(--sheet);border-radius:12px;padding:10px 12px}
@@ -72,10 +72,11 @@ textarea.field{min-height:7rem;resize:vertical}
 .week li{list-style:none;border-bottom:1px solid var(--line);padding:10px 0}
 .week button.link,.scraplink{border:0;background:none;text-align:left;min-height:44px;display:block;width:100%}
 .muted{color:var(--muted)}
-.top{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:8px;padding-right:84px}
-.who{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-right:auto;color:var(--muted);font-size:.85rem}
+.top{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:6px;margin:0 0 8px;padding-right:52px}
+.who{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-right:auto;min-width:0;flex:1 1 100%;color:var(--muted);font-size:.8rem}
+.who span{overflow-wrap:anywhere}
 .who a{text-decoration:underline;text-underline-offset:3px}
-#buddy{position:fixed;top:12px;right:12px;z-index:40;width:74px;height:74px;pointer-events:none;transform-origin:50% 80%;filter:drop-shadow(0 8px 14px rgba(28,25,21,.16))}
+#buddy{position:fixed;top:8px;right:8px;z-index:40;width:46px;height:46px;pointer-events:none;transform-origin:50% 80%;filter:drop-shadow(0 6px 10px rgba(28,25,21,.14))}
 #buddy .body{fill:#1c1915}
 #buddy .cheek{fill:#8c4a2f}
 #buddy .white{fill:#faf8f4}
@@ -108,15 +109,24 @@ dialog li strong{font-weight:600}
 .composer .mirror{position:absolute;inset:0;margin:0;padding:10px 12px;overflow:hidden;pointer-events:none;white-space:pre-wrap;word-break:break-word;color:var(--ink);font:inherit;line-height:1.5}
 .composer textarea{position:relative;display:block;width:100%;min-height:7rem;border:0;background:transparent;color:transparent;caret-color:var(--ink);resize:vertical;padding:10px 12px;line-height:1.5}
 .composer textarea::placeholder{color:var(--muted)}
-@media(min-width:800px){
+.capture{display:flex;gap:8px;align-items:center;margin:0 0 12px}
+.capture .field{flex:1;min-height:42px}
+@media(min-width:700px){
   .app{flex-direction:row}
-  aside{width:250px;border-bottom:0;border-right:1px solid var(--line);padding:22px 14px}
+  aside{width:200px;border-bottom:0;border-right:1px solid var(--line);padding:14px 10px}
   nav{flex-direction:column}
-  .tags{flex-direction:column;flex-wrap:nowrap;margin-top:22px}
-  .tags p{padding:0 12px 6px}
-  .tags button{border:0;border-radius:12px;text-align:left}
+  .tags{flex-direction:column;flex-wrap:nowrap;margin-top:16px}
+  .tags p{padding:0 8px 4px}
+  .tags button{border:0;border-radius:8px;text-align:left}
   .tags button.on{background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--ink)}
-  main{padding:28px}
+  main{padding:16px 18px 40px}
+  .who{flex:1 1 auto}
+}
+@media(min-width:1100px){
+  aside{width:228px;padding:18px 12px}
+  #buddy{width:62px;height:62px;top:12px;right:12px}
+  .top{flex-wrap:nowrap;padding-right:72px}
+  main{padding:18px 28px 48px}
 }
 .mark{transition:color .25s}
 .mark i{transition:transform .45s cubic-bezier(.2,.85,.2,1)}
@@ -125,16 +135,16 @@ dialog li strong{font-weight:600}
 nav button,nav a.navbtn,.tags button,.btn,.seg button,.day,.card,.week li,.scraplink,.read,.meta button,.who a{
   transition:transform .28s cubic-bezier(.2,.8,.2,1), background .22s, color .22s, border-color .22s, box-shadow .28s, padding .25s, background-size .3s;
 }
-nav button:hover:not(.on),nav a.navbtn:hover{transform:translateX(8px);color:var(--ink);background:color-mix(in srgb,var(--clay) 16%,transparent)}
+nav button:hover:not(.on),nav a.navbtn:hover{transform:translateX(4px);color:var(--ink);background:color-mix(in srgb,var(--clay) 12%,transparent)}
 .tags button:hover:not(:disabled):not(.on){transform:translateY(-3px);border-color:var(--clay);color:var(--ink)}
 .btn:hover{transform:translateY(-3px);box-shadow:0 10px 18px rgba(28,25,21,.12)}
 .btn:active{transform:translateY(0) scale(.97)}
 .btn.ink:hover{background:var(--clay);border-color:var(--clay)}
 .seg button:hover:not(.on){color:var(--ink);background:color-mix(in srgb,var(--clay) 18%,transparent)}
 .card{background:var(--sheet);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
-.card:hover{transform:translateY(-5px) rotate(-.35deg);border-color:color-mix(in srgb,var(--clay) 60%,var(--line));box-shadow:0 16px 30px rgba(28,25,21,.1)}
-.day:hover:not(.on){transform:scale(1.12);background:color-mix(in srgb,var(--clay) 18%,transparent)}
-.day.on:hover{transform:scale(1.08)}
+.card:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--clay) 45%,var(--line));box-shadow:0 10px 22px rgba(28,25,21,.08)}
+.day:hover:not(.on){transform:scale(1.04);background:color-mix(in srgb,var(--clay) 12%,transparent)}
+.day.on:hover{transform:scale(1.03)}
 .dots i{transition:transform .2s}
 .day:hover .dots i{transform:scale(1.35)}
 .week li:hover{padding-left:10px;background:color-mix(in srgb,var(--clay) 9%,transparent)}
@@ -575,10 +585,11 @@ function nowView() {
   const lead = q.length >= 2 || !next ? "" : `<h2 style="font-family:var(--serif);font-weight:500;margin-top:18px">Do this next</h2><div class="stack">${taskCard(next, next.day < start)}</div>`;
   const rot = cold.length ? `<p class="late" style="margin-top:10px">${cold.length} loose note${cold.length === 1 ? "" : "s"} sitting a week or more. <button type="button" class="btn" id="open-loose">Open loose</button></p>` : "";
   const undo = priorDesk ? `<button type="button" class="btn" id="undo-sort">Undo the last sort</button>` : "";
-  return `<p class="kicker">Now</p><h1>What’s due</h1>
+  return `<form id="quick" class="capture"><input class="field" name="text" aria-label="Dump a thought" placeholder="Dump a thought. Enter keeps it." autocomplete="off"><button class="btn ink" type="submit">Keep</button></form>
+    <p class="kicker">Now</p><h1>What’s due</h1>
     <p class="sub">${looseNotes().length} loose · ${undatedNotes().length} in a project with no date.</p>
     ${rot}
-    ${account ? `<div class="row" style="margin-top:14px"><button type="button" class="btn ink" id="compile" ${compiling ? "disabled" : ""}>Organize loose notes</button>${undo}</div><p class="muted" style="margin-top:8px">Sorts on the page from dates, names, tags, and shared words.</p>` : ""}
+    ${account ? `<div class="row" style="margin-top:10px"><button type="button" class="btn ink" id="compile" ${compiling ? "disabled" : ""}>Organize loose notes</button>${undo}</div><p class="muted" style="margin-top:6px">Ties notes that share a #tag, a name, or the same uncommon word. A date by itself does not join them.</p>` : ""}
     ${guideCard()}
     <input id="find" class="field" style="margin-top:14px" placeholder="Search notes" value="${esc(query)}" aria-label="Search notes">
     ${lead}
@@ -678,6 +689,7 @@ function threadView() {
   return `<button class="btn" type="button" id="back-cal">Calendar</button>
     <p class="kicker" style="margin-top:14px">Thread</p>
     <h1>${esc(thread.title)}</h1>
+    ${thread.why ? `<p class="sub">${esc(thread.why)}</p>` : ""}
     <form id="thread-edit" class="stack">
       <select class="field" name="project" aria-label="Project">${opts}</select>
       <input class="field" name="date" type="date" aria-label="Target date" value="${esc(thread.targetDate||"")}">
@@ -882,6 +894,16 @@ async function compileNotes() {
 }
 
 function bind() {
+  const quick = document.getElementById("quick");
+  if (quick) quick.onsubmit = (event) => {
+    event.preventDefault();
+    const text = new FormData(quick).get("text").toString().trim();
+    if (!text) return;
+    db.scraps.unshift({ id: uid(), text, createdAt: new Date().toISOString(), threadId: null, projectId: null, targetDate: null, done: false });
+    save();
+    notice = "Kept.";
+    render();
+  };
   const compile = document.getElementById("compile");
   if (compile) compile.onclick = () => { void compileNotes(); };
   const undoSort = document.getElementById("undo-sort");
