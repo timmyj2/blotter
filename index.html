@@ -60,6 +60,7 @@
     <li><strong>Loose</strong> is the unsorted pile. Pick a note and give it a project, a date, or both. A note sitting a week gets called out on Now.</li>
     <li><strong>Organize loose notes</strong> groups notes that share words, a name, a #tag, or a date. <strong>Undo the last sort</strong> puts them back.</li>
     <li><strong>Now</strong> leads with the one thing to do next, then the rest of the week. <strong>Calendar</strong> shows which days have something on them. Click a note to edit its text, project, or due date.</li>
+    <li><strong>Projects</strong> opens one window per project, as many as you want. The year bar shows where those projects overlap.</li>
     <li><strong>Map</strong> draws the links. Type <strong>[[a name]]</strong> in a note to connect it to a matching title. <strong>Search</strong> takes words, "a phrase", #tag, or [[name]], and lists what that note connects to.</li>
     <li>Your notes stay on this Google account. Another person on the list cannot open them.</li>
   </ol>
@@ -85,10 +86,11 @@
 <script>
 (async () => {
   try {
-    const [ra, rb, rm] = await Promise.all([
+    const [ra, rb, rm, rp] = await Promise.all([
       fetch("/blotter-app.a.b64"),
       fetch("/blotter-app.b.b64"),
       fetch("/map-view.js"),
+      fetch("/projects-view.js"),
     ]);
     if (!ra.ok || !rb.ok) throw new Error("missing app");
     const b64 = ((await ra.text()) + (await rb.text())).replace(/\s+/g, "");
@@ -102,6 +104,25 @@
           /document\.querySelectorAll\("\[data-map\]"\)\.forEach\(\(btn\) => \{\s*btn\.onclick = \(\) => openNode\(btn\.dataset\.map\);\s*\}\);/,
           'document.querySelectorAll("[data-map]").forEach((btn) => {\n    btn.onclick = () => openNode(btn.dataset.map);\n  });\n  if (typeof bindMapZoom === "function") bindMapZoom();'
         );
+      }
+    }
+    if (rp.ok) {
+      const projects = (await rp.text()).trim();
+      if (projects.startsWith("let chartYear")) {
+        text = text.replace(
+          '["calendar","Calendar"],["map","Map"]',
+          '["calendar","Calendar"],["projects","Projects"],["map","Map"]'
+        );
+        text = text.split('go("project", { projectId: id })').join("openBoard(id)");
+        text = text.replace(
+          'const root = document.getElementById("view");\n  if (view === "now")',
+          'const root = document.getElementById("view");\n  root.classList.toggle("wide", view === "projects");\n  if (view === "now")'
+        );
+        text = text.replace(
+          'else if (view === "calendar") root.innerHTML = calendarView();',
+          'else if (view === "calendar") root.innerHTML = calendarView();\n  else if (view === "projects") root.innerHTML = projectsView();'
+        );
+        text = text.replace("\nfunction bind() {", "\n" + projects + "\nfunction bind() {\n  bindProjects();");
       }
     }
     (0, eval)(text);
