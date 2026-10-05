@@ -608,9 +608,21 @@ function nowView() {
        <h2 style="font-family:var(--serif);font-weight:500;margin-top:18px">This week</h2>
        <div class="stack">${soon.length ? soon.map((item) => taskCard(item, false)).join("") : `<p class="empty">Nothing else in the next 7 days.</p>`}</div>`;
   const lead = q.length >= 2 || !next ? "" : `<h2 style="font-family:var(--serif);font-weight:500;margin-top:18px">Do this next</h2><div class="stack">${taskCard(next, next.day < start)}</div>`;
-  const rot = cold.length ? `<p class="late" style="margin-top:10px">${cold.length} loose note${cold.length === 1 ? "" : "s"} sitting a week or more. <button type="button" class="btn" id="open-loose">Open loose</button></p>` : "";
+  const rot = cold.length ? `<p class="late" style="margin-top:10px">${cold.length} loose note${cold.length === 1 ? "" : "s"} sitting a week or more. <button type="button" class="btn open-loose">Open loose</button></p>` : "";
   const undo = priorDesk ? `<button type="button" class="btn" id="undo-sort">Undo the last sort</button>` : "";
+  const loose = looseNotes().slice().sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)));
+  const shown = loose.slice(0, 5);
+  const pile = loose.length ? `<section>
+      <p class="kicker" style="margin-top:10px">Still loose</p>
+      <div class="stack">${shown.map((scrap) => {
+        const age = ageDays(scrap.createdAt);
+        const title = scrap.text.length > 90 ? scrap.text.slice(0, 72).trim() + "…" : scrap.text;
+        return `<article class="card"><button type="button" class="read" data-read="${esc(scrap.id)}">${rich(title)}</button><div class="meta">${age >= 1 ? `<span class="${age >= 7 ? "late" : ""}">${age}d</span>` : `<span>today</span>`}</div></article>`;
+      }).join("")}</div>
+      ${loose.length > shown.length ? `<button type="button" class="btn open-loose" style="margin-top:6px">See ${loose.length - shown.length} more</button>` : ""}
+    </section>` : "";
   return `<form id="quick" class="capture"><input class="field" name="text" aria-label="Dump a thought" placeholder="Start here. Dump a thought, then Enter." autocomplete="off"><button class="btn ink" type="submit">Keep</button></form>
+    ${pile}
     <p class="kicker">Now</p><h1>What’s due</h1>
     <p class="sub">${looseNotes().length} loose · ${undatedNotes().length} in a project with no date.</p>
     ${rot}
@@ -940,8 +952,7 @@ function bind() {
     save();
     render();
   };
-  const openLoose = document.getElementById("open-loose");
-  if (openLoose) openLoose.onclick = () => go("loose");
+  document.querySelectorAll(".open-loose").forEach((btn) => { btn.onclick = () => go("loose"); });
   document.querySelectorAll("[data-map]").forEach((btn) => {
     btn.onclick = () => openNode(btn.dataset.map);
   });
