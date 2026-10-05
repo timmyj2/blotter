@@ -166,6 +166,14 @@
         if (swapped !== text) text = swapped;
       }
     }
+    text = text.replace(
+      '${label}${count?` ${count}`:""}',
+      '${label}${count?` <span class="count">${count}</span>`:""}'
+    );
+    text = text.replace(
+      "const id = e.target.dataset.view;",
+      'const id = e.target.closest("button")?.dataset.view;'
+    );
     (0, eval)(text);
   } catch (err) {
     const view = document.getElementById("view");

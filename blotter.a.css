@@ -29,8 +29,10 @@ aside{background:var(--sheet);border-bottom:1px solid var(--line);padding:8px 12
 .mark{display:flex;align-items:center;gap:8px;font-family:var(--serif);font-size:1.25rem}
 .mark i{display:grid;width:28px;height:28px;place-items:center;border-radius:50%;background:var(--ink);color:var(--paper);font-style:italic}
 nav{display:flex;flex-wrap:wrap;gap:2px;margin-top:6px}
-nav button,nav a.navbtn{min-height:36px;border:0;border-radius:8px;background:transparent;color:var(--muted);padding:0 8px;white-space:nowrap;font-size:.92rem}
+nav button,nav a.navbtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;border:0;border-radius:8px;background:transparent;color:var(--muted);padding:0 8px;white-space:nowrap;font-size:.92rem}
+nav button .count{display:inline-grid;place-items:center;min-width:1.15rem;height:1.15rem;padding:0 4px;border-radius:999px;background:var(--clay);color:#faf8f4;font-size:.68rem;font-weight:600;line-height:1}
 nav button.on{background:var(--ink);color:var(--paper)}
+nav button.on .count{background:var(--paper);color:var(--ink)}
 .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
 .tags p{width:100%;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .tags button{min-height:28px;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;padding:0 10px;font-size:.85rem}
