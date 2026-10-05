@@ -35,9 +35,17 @@ function wikis(text) {
 }
 
 function people(text) {
+  const skip = new Set([...WEEKDAYS, ...Object.keys(MONTHS)]);
+  const clean = (name) => name.split(/\s+/).filter((part) => !skip.has(part.toLowerCase())).join(" ");
   const found = new Set();
-  for (const match of String(text).matchAll(/\b(?:with|for|from|meet|call|email)\s+([A-Z][a-z]{2,}(?:\s[A-Z][a-z]{2,})?)/g)) found.add(match[1].toLowerCase());
-  for (const match of String(text).matchAll(/\b([A-Z][a-z]{2,}\s[A-Z][a-z]{2,})\b/g)) found.add(match[1].toLowerCase());
+  for (const match of String(text).matchAll(/\b(?:with|for|from|meet|call|email)\s+([A-Z][a-z]{2,}(?:\s[A-Z][a-z]{2,})?)/g)) {
+    const name = clean(match[1]);
+    if (name.length > 2) found.add(name.toLowerCase());
+  }
+  for (const match of String(text).matchAll(/\b([A-Z][a-z]{2,}\s[A-Z][a-z]{2,})\b/g)) {
+    const name = clean(match[1]);
+    if (name.includes(" ")) found.add(name.toLowerCase());
+  }
   return [...found];
 }
 
@@ -157,9 +165,9 @@ export function planDesk(desk, today) {
   for (const note of notes) {
     if (used.has(note.id)) continue;
     const tag = note.tags[0] ? titleCase(note.tags[0]) : "";
-    const person = note.names[0] ? titleCase(note.names[0]) : "";
     const known = note.known[0] || "";
-    const project = known || tag || person;
+    const person = note.names.find((name) => name.includes(" "));
+    const project = known || tag || (person ? titleCase(person) : "");
     if (project || note.day) places.push({ scrapId: note.id, project, targetDate: note.day });
   }
   return { threads: threads.slice(0, 20), places: places.slice(0, 40) };
