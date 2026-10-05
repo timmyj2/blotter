@@ -24,6 +24,9 @@ button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 a{color:inherit;text-decoration:none}
 .app{display:flex;min-height:100vh;flex-direction:column}
+.desk{display:flex;flex:1;flex-direction:column;min-width:0}
+.mast{display:flex;align-items:center;gap:10px;padding:6px 46px 6px 12px;border-bottom:1px solid var(--line);background:var(--paper)}
+.seg svg{pointer-events:none}
 aside{background:var(--sheet);border-bottom:1px solid var(--line);padding:8px 44px 8px 12px}
 .brand{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .mark{display:flex;align-items:center;gap:8px;font-family:var(--serif);font-size:1.25rem}
@@ -117,8 +120,8 @@ dialog li strong{font-weight:600}
 .composer textarea{position:relative;display:block;width:100%;min-height:7rem;border:0;background:transparent;color:transparent;caret-color:var(--ink);resize:vertical;padding:10px 12px;line-height:1.5}
 .composer textarea::placeholder{color:var(--muted)}
 @media(min-width:700px){
-  .app{flex-direction:row}
-  aside{width:200px;border-bottom:0;border-right:1px solid var(--line);padding:14px 10px}
+  .desk{flex-direction:row}
+  aside{width:200px;border-bottom:0;border-right:1px solid var(--line);padding:12px 10px;display:flex;flex-direction:column;min-height:calc(100vh - 44px)}
   nav{flex-direction:column}
   .tags{flex-direction:column;flex-wrap:nowrap;margin-top:16px}
   .tags p{padding:0 8px 4px}
@@ -126,7 +129,6 @@ dialog li strong{font-weight:600}
   .tags button.on{background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--ink)}
   main{padding:12px 16px 32px}
   .who{flex:1 1 auto}
-  aside{display:flex;flex-direction:column;min-height:100vh}
   .sidefoot{margin-top:auto;flex-direction:column;align-items:flex-start}
 }
 @media(min-width:1100px){
@@ -175,14 +177,15 @@ nav button:hover:not(.on),nav a.navbtn:hover{transform:translateX(4px);color:var
 </head>
 <body>
 <div class="app">
-  <aside>
-    <div class="brand">
-      <a class="mark" href="/"><i>B</i> Blotter</a>
-      <div class="seg" id="theme">
-        <button type="button" data-theme="light" aria-label="Light" title="Light"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="3.5" fill="currentColor"/><path fill="none" stroke="currentColor" stroke-width="2" d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/></svg></button>
-        <button type="button" data-theme="dark" aria-label="Dark" title="Dark"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M20 14.5A8.5 8.5 0 0 1 9.5 4 7 7 0 1 0 20 14.5z"/></svg></button>
-      </div>
+  <header class="mast">
+    <a class="mark" href="/"><i>B</i> Blotter</a>
+    <div class="seg" id="theme">
+      <button type="button" data-theme="light" aria-label="Light" title="Light"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="3.5" fill="currentColor"/><path fill="none" stroke="currentColor" stroke-width="2" d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/></svg></button>
+      <button type="button" data-theme="dark" aria-label="Dark" title="Dark"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M20 14.5A8.5 8.5 0 0 1 9.5 4 7 7 0 1 0 20 14.5z"/></svg></button>
     </div>
+  </header>
+  <div class="desk">
+  <aside>
     <nav id="nav"></nav>
     <div class="tags" id="tags"></div>
     <div class="sidefoot">
@@ -194,6 +197,7 @@ nav button:hover:not(.on),nav a.navbtn:hover{transform:translateX(4px);color:var
     <p id="note-line" class="sub" hidden style="max-width:42rem;margin:0 auto 6px"></p>
     <div class="wrap" id="view"></div>
   </main>
+  </div>
 </div>
 <div id="drop" hidden>Drop a markdown or text file</div>
 <dialog id="howto">
@@ -406,8 +410,8 @@ function setTheme(name) {
   document.querySelectorAll("#theme button").forEach((b) => b.classList.toggle("on", b.dataset.theme === name));
 }
 document.getElementById("theme").onclick = (e) => {
-  const name = e.target.dataset.theme;
-  if (name) setTheme(name);
+  const button = e.target.closest("button");
+  if (button?.dataset.theme) setTheme(button.dataset.theme);
 };
 setTheme(localStorage.getItem(THEME) === "dark" ? "dark" : "light");
 
