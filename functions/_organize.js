@@ -35,16 +35,18 @@ function wikis(text) {
 }
 
 function people(text) {
-  const skip = new Set([...WEEKDAYS, ...Object.keys(MONTHS)]);
-  const clean = (name) => name.split(/\s+/).filter((part) => !skip.has(part.toLowerCase())).join(" ");
+  const skip = new Set([...WEEKDAYS, ...Object.keys(MONTHS), "ask", "pay", "call", "email", "meet", "send", "book", "open", "keep", "make", "need", "complete", "schedule", "review", "follow", "write", "update", "check", "please", "the", "this", "that"]);
+  const caps = String(text).match(/\b[A-Z][a-z]{2,}\b/g) || [];
   const found = new Set();
-  for (const match of String(text).matchAll(/\b(?:with|for|from|meet|call|email)\s+([A-Z][a-z]{2,}(?:\s[A-Z][a-z]{2,})?)/g)) {
-    const name = clean(match[1]);
-    if (name.length > 2) found.add(name.toLowerCase());
+  for (let i = 0; i < caps.length - 1; i++) {
+    if (skip.has(caps[i].toLowerCase()) || skip.has(caps[i + 1].toLowerCase())) continue;
+    found.add(`${caps[i]} ${caps[i + 1]}`.toLowerCase());
   }
-  for (const match of String(text).matchAll(/\b([A-Z][a-z]{2,}\s[A-Z][a-z]{2,})\b/g)) {
-    const name = clean(match[1]);
-    if (name.includes(" ")) found.add(name.toLowerCase());
+  for (const match of String(text).matchAll(/\b(?:with|for|from)\s+([A-Z][a-z]{2,})(?:\s+([A-Z][a-z]{2,}))?/g)) {
+    const first = match[1];
+    const second = match[2] && !skip.has(match[2].toLowerCase()) ? match[2] : "";
+    if (skip.has(first.toLowerCase())) continue;
+    found.add((second ? `${first} ${second}` : first).toLowerCase());
   }
   return [...found];
 }
