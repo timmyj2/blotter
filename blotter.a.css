@@ -15,6 +15,14 @@ a{color:inherit;text-decoration:none}
 .desk{display:flex;flex:1;flex-direction:column;min-width:0}
 .mast{display:flex;align-items:center;gap:10px;padding:6px 12px;border-bottom:1px solid var(--line);background:var(--paper)}
 .mast .seg{margin-left:auto}
+.hamburger{display:none;width:32px;height:32px;flex:none;place-items:center;border:1px solid var(--line);border-radius:8px;background:var(--sheet);color:var(--ink);padding:0}
+.hamburger .x{display:none}
+.hamburger.on .bars{display:none}
+.hamburger.on .x{display:block}
+@media(max-width:1099px){
+  .hamburger{display:grid}
+  .app.nav-shut aside{display:none}
+}
 .seg svg{pointer-events:none}
 aside{background:var(--sheet);border-bottom:1px solid var(--line);padding:8px 12px}
 .brand{display:flex;align-items:center;justify-content:space-between;gap:12px}

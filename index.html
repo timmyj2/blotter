@@ -13,8 +13,12 @@
 <link rel="stylesheet" href="/blotter.b.css">
 </head>
 <body>
-<div class="app">
+<div class="app nav-shut">
   <header class="mast">
+    <button type="button" class="hamburger" id="nav-toggle" aria-label="Menu" aria-expanded="false">
+      <svg class="bars" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <svg class="x" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
     <a class="mark" href="/"><i>B</i> Blotter</a>
     <div id="buddy" aria-hidden="true">
       <svg viewBox="0 0 80 84" width="30" height="32">
@@ -83,6 +87,35 @@
     </div>
   </form>
 </dialog>
+<script>
+(() => {
+  const app = document.querySelector(".app");
+  const btn = document.getElementById("nav-toggle");
+  const aside = document.querySelector("aside");
+  const phone = () => matchMedia("(max-width: 699px)").matches;
+  const desk = () => matchMedia("(min-width: 1100px)").matches;
+  const paint = () => {
+    const shut = app.classList.contains("nav-shut") && !desk();
+    btn.setAttribute("aria-expanded", shut ? "false" : "true");
+    btn.classList.toggle("on", !shut && !desk());
+  };
+  if (!phone()) app.classList.remove("nav-shut");
+  paint();
+  btn.onclick = () => {
+    app.classList.toggle("nav-shut");
+    paint();
+  };
+  aside.addEventListener("click", (event) => {
+    if (!phone() || !event.target.closest("button, a")) return;
+    app.classList.add("nav-shut");
+    paint();
+  });
+  matchMedia("(max-width: 699px)").addEventListener("change", (event) => {
+    app.classList.toggle("nav-shut", event.matches);
+    paint();
+  });
+})();
+</script>
 <script>
 (async () => {
   try {
