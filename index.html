@@ -345,6 +345,15 @@ const TEMPLATES = {
   follow: "#followup\nWho:\nNeed:\n",
   idea: "#idea\nWorth it because:\n",
 };
+function noteTags() {
+  const found = new Set();
+  const grab = (text) => {
+    for (const match of String(text).matchAll(/(^|\s)#([A-Za-z][\w-]{0,40})/g)) found.add(match[2].toLowerCase());
+  };
+  for (const scrap of db.scraps) if (!scrap.done) grab(scrap.text);
+  for (const thread of db.threads) if (!thread.done) grab(thread.title);
+  return [...found].sort();
+}
 function looseNotes() {
   return db.scraps.filter((s) => !s.threadId && !s.done && !s.projectId && !s.targetDate);
 }
@@ -426,12 +435,18 @@ function renderNav() {
     if (id) go(id);
   };
   const tags = document.getElementById("tags");
-  tags.innerHTML = `<p>Tags</p>` + (db.projects.length ? db.projects.map((p) =>
+  const hashes = noteTags().filter((name) => !db.projects.some((project) => project.name.toLowerCase() === name));
+  const buttons = db.projects.map((p) =>
     `<button type="button" data-project="${esc(p.id)}" class="${view==="project"&&projectFilter===p.id?"on":""}">#${esc(p.name)}</button>`
-  ).join("") : `<button type="button" disabled>None yet</button>`);
+  ).concat(hashes.map((name) =>
+    `<button type="button" data-hash="${esc(name)}" class="${view==="search"&&query.toLowerCase()==="#"+name?"on":""}">#${esc(name)}</button>`
+  )).join("");
+  tags.innerHTML = `<p>Tags</p>` + (buttons || `<button type="button" disabled>None yet</button>`);
   tags.onclick = (e) => {
     const id = e.target.dataset.project;
+    const hash = e.target.dataset.hash;
     if (id) go("project", { projectId: id });
+    else if (hash) { query = "#" + hash; go("search"); }
   };
 }
 
