@@ -25,12 +25,13 @@ export async function onRequestGet(context) {
   if (!email) return Response.json({ error: "Sign in required." }, { status: 401 });
   if (!context.env.DB) return Response.json({ error: "Database is not connected." }, { status: 500 });
   await ready(context.env);
-  const row = await context.env.DB.prepare("SELECT data FROM desks WHERE email = ?").bind(email).first();
+  const row = await context.env.DB.prepare("SELECT data, updated_at FROM desks WHERE email = ?").bind(email).first();
   if (!row) return Response.json({ scraps: [], threads: [], projects: [] });
+  const headers = { "x-desk-updated": String(row.updated_at || ""), "cache-control": "no-store" };
   try {
-    return Response.json(clean(JSON.parse(row.data)));
+    return Response.json(clean(JSON.parse(row.data)), { headers });
   } catch {
-    return Response.json({ scraps: [], threads: [], projects: [] });
+    return Response.json({ scraps: [], threads: [], projects: [] }, { headers });
   }
 }
 
