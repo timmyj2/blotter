@@ -126,3 +126,86 @@ background-size:0 2px;
 html[data-theme="dark"] .win{background:var(--sheet);color:var(--ink);border-color:var(--line)}
 html[data-theme="dark"] .win header{border-bottom-color:var(--line)}
 html[data-theme="dark"] .win .muted,html[data-theme="dark"] .win .empty{color:var(--muted)}
+/* calendar warmth: month grid + project year chart */
+:root{--tone-0:#8c4a2f;--tone-1:#a5761b;--tone-2:#5c7a4b;--tone-3:#4b6884;--tone-4:#7b4d6c;--tone-5:#3c7770;--cell:#fdfbf7;--wkend:#f5efe4;--today-ink:#faf8f4}
+html[data-theme="dark"]{--tone-0:#e0a07e;--tone-1:#d8b05c;--tone-2:#9fbc88;--tone-3:#93b2d0;--tone-4:#cc9cbd;--tone-5:#86c4ba;--cell:#26211c;--wkend:#2b251f;--today-ink:#1c1915}
+.month h1 .yr{color:var(--muted);font-style:italic}
+.cal-nav .btn{min-width:32px;padding:0 10px}
+.cal-nav #prev,.cal-nav #next{width:32px;padding:0;font-size:1.05rem;line-height:1}
+.cal-card{margin-top:12px;padding:10px;border:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--sheet) 70%,var(--paper));box-shadow:0 1px 0 color-mix(in srgb,var(--ink) 4%,transparent)}
+.cal-card .grid{margin-top:0;gap:5px}
+.cal-card .dow{padding:2px 0 4px;font-weight:600}
+.cal-card .dow.weekend{color:var(--clay)}
+.cal-card .day{position:relative;min-height:62px;align-items:stretch;justify-content:space-between;gap:4px;padding:6px 6px 7px;border:1px solid color-mix(in srgb,var(--line) 80%,transparent);border-radius:11px;background:var(--cell);text-align:left;color:var(--ink)}
+.cal-card .day.weekend{background:var(--wkend)}
+.cal-card .day.off{background:transparent;border-color:color-mix(in srgb,var(--line) 45%,transparent);color:color-mix(in srgb,var(--muted) 55%,transparent)}
+.cal-card .day.off .dots{opacity:.5}
+.cal-card .day .num{display:inline-grid;place-items:center;align-self:flex-start;min-width:1.6rem;height:1.6rem;padding:0 4px;border-radius:999px;font-size:.86rem;font-variant-numeric:tabular-nums;line-height:1}
+.cal-card .day.has:not(.off){border-color:color-mix(in srgb,var(--clay) 22%,var(--line))}
+.cal-card .day.today{border-color:var(--clay);box-shadow:0 0 0 2px color-mix(in srgb,var(--clay) 22%,transparent)}
+.cal-card .day.today .num{background:var(--clay);color:var(--today-ink);font-weight:600}
+.cal-card .day.on{background:color-mix(in srgb,var(--clay) 13%,var(--cell));color:var(--ink);border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.cal-card .day.on.today{box-shadow:0 0 0 1px var(--ink),0 0 0 4px color-mix(in srgb,var(--clay) 22%,transparent)}
+.cal-card .day:hover:not(.on){transform:translateY(-2px);background:color-mix(in srgb,var(--clay) 9%,var(--cell));border-color:color-mix(in srgb,var(--clay) 45%,var(--line));box-shadow:0 8px 16px rgba(28,25,21,.08)}
+.cal-card .day.off:hover:not(.on){background:color-mix(in srgb,var(--clay) 6%,transparent)}
+.cal-card .day.on:hover{transform:translateY(-1px)}
+.cal-card .day:focus-visible{outline:2px solid var(--clay);outline-offset:2px}
+.cal-card .dots{display:flex;flex-wrap:wrap;align-items:center;gap:3px;height:auto;min-height:6px}
+.cal-card .dots i{width:14px;height:6px;border-radius:999px;background:var(--tone,var(--muted))}
+.cal-card .day.on .dots i{background:var(--tone,var(--muted))}
+.cal-card .dots em{font-style:normal;font-size:.62rem;font-weight:600;color:var(--muted);line-height:1}
+.cal-card .day:hover .dots i{transform:scaleY(1.3)}
+.cal-card .tally{position:absolute;top:6px;right:6px;display:inline-grid;place-items:center;min-width:1.05rem;height:1.05rem;padding:0 4px;border-radius:999px;background:color-mix(in srgb,var(--clay) 16%,transparent);color:var(--clay);font-size:.62rem;font-weight:600;line-height:1}
+.cal-card .day.overdue:not(.off) .tally{background:var(--clay);color:var(--today-ink)}
+.cal-card .day.off .tally{opacity:.55}
+@media(max-width:699px){
+  .cal-card{padding:6px;border-radius:14px}
+  .cal-card .grid{gap:3px}
+  .cal-card .day{min-height:48px;padding:4px 3px 5px;border-radius:9px;align-items:center}
+  .cal-card .day .num{align-self:center;min-width:1.4rem;height:1.4rem;font-size:.8rem}
+  .cal-card .dots{justify-content:center;gap:2px}
+  .cal-card .dots i{width:6px;height:6px}
+  .cal-card .dots em,.cal-card .tally{display:none}
+}
+.week-head{font-family:var(--serif);font-weight:500;font-size:1.6rem;margin-top:22px}
+.week li{display:grid;grid-template-columns:4.2rem minmax(0,1fr);gap:4px 10px;align-items:start;padding:7px 6px;border-radius:0}
+.week li > strong{display:flex;align-items:baseline;gap:5px;font-family:var(--serif);font-weight:500;font-size:1.15rem;line-height:1.2}
+.week li > strong span{font-family:var(--sans);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.week li .wk-body{min-width:0}
+.week li .wk-body .row{flex-wrap:nowrap}
+.week li .wk-body .scraplink{flex:1;min-width:0}
+.week li.is-today{background:color-mix(in srgb,var(--clay) 8%,transparent);box-shadow:inset 3px 0 0 var(--clay)}
+.week li.is-today > strong,.week li.is-late > strong{color:var(--clay)}
+.week li.is-picked:not(.is-today){box-shadow:inset 3px 0 0 var(--ink)}
+.ptag{flex:none;display:inline-flex;align-items:center;gap:4px;max-width:9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.7rem;color:var(--muted)}
+.ptag::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--tone,var(--muted))}
+@media(max-width:699px){.week li{grid-template-columns:3.2rem minmax(0,1fr)}.ptag{display:none}}
+/* projects year chart */
+.year-card{gap:0;margin-top:10px;padding:10px 12px 6px;border:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--sheet) 70%,var(--paper))}
+.year-card .scale.wide{margin:0 0 4px;gap:0}
+.year-card .scale i{font-style:normal;text-align:center;padding:3px 0;border-radius:999px;font-weight:600}
+.year-card .scale i .short{display:none}
+.year-card .scale i.this{background:var(--clay);color:var(--today-ink)}
+@media(max-width:699px){.year-card .scale i .long{display:none}.year-card .scale i .short{display:inline}}
+.year-card .prow{border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent);padding:9px 0}
+.year-card .prow:last-child{border-bottom:0}
+.year-card .prow.overlap{gap:4px;padding-top:4px}
+.year-card .prow.overlap .lane-name{flex:0 0 auto;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.year-card .heat{height:18px;gap:0 3px}
+.year-card .heat i{display:grid;place-items:center;border-radius:6px;font-style:normal;font-size:.62rem;font-weight:600;color:var(--muted);background:color-mix(in srgb,var(--line) 55%,transparent);opacity:1}
+.year-card .heat i.on{background:color-mix(in srgb,var(--clay) var(--heat),var(--cell));color:var(--ink)}
+.year-card .heat i.hot{color:var(--today-ink)}
+.year-card .heat i.this{box-shadow:inset 0 0 0 1.5px var(--clay)}
+.year-card .lane-name{display:inline-flex;align-items:center;gap:7px;font-weight:600}
+.year-card .lane-name .swatch{flex:none;width:10px;height:10px;border-radius:3px;background:var(--tone,var(--clay))}
+.year-card .lane-meta{font-weight:400;font-size:.72rem;color:var(--muted)}
+.year-card .lane-name:hover{color:var(--tone,var(--clay))}
+.year-card .prow .track{height:16px;min-height:16px;border-radius:8px;overflow:visible;background-color:color-mix(in srgb,var(--line) 45%,transparent);background-image:linear-gradient(90deg,transparent 50%,color-mix(in srgb,var(--line) 55%,transparent) 50%);background-size:calc(100% / 6) 100%;transition:box-shadow .2s}
+.year-card .prow .track:hover{box-shadow:0 0 0 1.5px color-mix(in srgb,var(--tone,var(--clay)) 55%,transparent)}
+.year-card .track b{top:3px;bottom:3px;background:var(--tone,var(--clay));opacity:.4}
+.year-card .track b.planned{opacity:.9}
+.year-card .track .tick{top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:var(--tone,var(--ink));box-shadow:0 0 0 2px var(--cell)}
+.year-card .track .now{top:-4px;bottom:-4px;width:2px;margin-left:-1px;border-radius:2px;background:var(--clay);opacity:.85}
+.win .dot{background:var(--tone,var(--clay))}
+.win{box-shadow:inset 0 3px 0 var(--tone,var(--clay))}
+.yearbar #year-prev,.yearbar #year-next{width:32px;padding:0}
