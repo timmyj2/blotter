@@ -189,8 +189,8 @@
       const format = (await rf.text()).trim();
       if (format.includes("function bindFormat")) {
         const hooked = "\nfunction bind() {\n  bindProjects();";
-        if (text.includes(hooked)) text = text.replace(hooked, "\n" + format + hooked);
-        else text = text.replace("\nfunction bind() {", "\n" + format + "\nfunction bind() {");
+        if (text.includes(hooked)) text = text.replace(hooked, () => "\n" + format + hooked);
+        else text = text.replace("\nfunction bind() {", () => "\n" + format + "\nfunction bind() {");
         const tail = 'dialog.addEventListener("click", (event) => { if (event.target === dialog) closeEdit(); });\n    }\n  }\n}';
         if (text.includes(tail)) {
           text = text.replace(tail, tail.replace(/\n\}$/, "\n  bindFormat();\n}"));
