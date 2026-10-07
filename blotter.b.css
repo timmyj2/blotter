@@ -209,3 +209,18 @@ html[data-theme="dark"]{--tone-0:#e0a07e;--tone-1:#d8b05c;--tone-2:#9fbc88;--ton
 .win .dot{background:var(--tone,var(--clay))}
 .win{box-shadow:inset 0 3px 0 var(--tone,var(--clay))}
 .yearbar #year-prev,.yearbar #year-next{width:32px;padding:0}
+.formatbar{display:flex;gap:4px;margin:0 0 8px}
+.formatbar button{min-width:32px;min-height:28px;border:1px solid var(--line);border-radius:8px;background:var(--sheet);padding:0 8px}
+.formatbar button:hover{border-color:var(--clay);color:var(--clay)}
+.composer .write{min-height:7rem;border:0;background:transparent;padding:10px 12px;white-space:pre-wrap;word-break:break-word;outline:none}
+.write:empty:before{content:attr(data-placeholder);color:var(--muted);pointer-events:none}
+#edit-write{min-height:8rem;white-space:pre-wrap;word-break:break-word}
+.read{white-space:pre-wrap}
+.read strong,.write strong{font-weight:800}
+.bullet{display:block}
+.bullet:before{content:"• ";color:var(--clay)}
+.tag-menu{position:fixed;z-index:40;min-width:148px;background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:4px;box-shadow:0 10px 22px rgba(28,25,21,.12)}
+.tag-menu[hidden]{display:none}
+.tag-menu button{display:block;width:100%;text-align:left;border:0;background:none;border-radius:8px;min-height:32px;padding:6px 10px}
+.tag-menu button:hover{background:color-mix(in srgb,var(--clay) 14%,transparent)}
+
