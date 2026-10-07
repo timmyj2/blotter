@@ -1,3 +1,5 @@
+let editingId = "";
+
 function scrapText(root) {
   if (!root) return "";
   const parts = [...root.childNodes].map((node) => {
@@ -68,33 +70,37 @@ function rich(text) {
 }
 
 function dumpView() {
-  const recent = db.scraps.slice(0, 5);
-  return `<p class="kicker">Dump</p><h1>Put it down.</h1>
-    <p class="sub">Bold, underline, or a bullet. Ctrl+Enter keeps it.</p>
-    <div class="row" id="templates">
-      <button type="button" class="btn" data-template="quick">Quick</button>
-      <button type="button" class="btn" data-template="meeting">Meeting</button>
-      <button type="button" class="btn" data-template="decision">Decision</button>
-      <button type="button" class="btn" data-template="follow">Follow-up</button>
-      <button type="button" class="btn" data-template="idea">Idea</button>
-    </div>
+  const scrap = editingId ? db.scraps.find((item) => item.id === editingId) : null;
+  const projectId = scrap?.projectId || "";
+  const projects = `<option value="">No project</option>` +
+    db.projects.map((project) => `<option value="${esc(project.id)}" ${project.id === projectId ? "selected" : ""}>${esc(project.name)}</option>`).join("") +
+    `<option value="__new__">New project</option>`;
+  const dueValue = scrap?.targetDate || "";
+  const recent = db.scraps.filter((item) => !item.done).slice(0, 12);
+  const list = recent.map((item) => {
+    const line = String(item.text).split("\n").map((part) => part.trim()).find(Boolean) || "Empty note";
+    const title = line.replace(/^(?:- |\*\*|## |\+\+)/, "").replace(/\*\*/g, "");
+    const shown = title.length > 72 ? title.slice(0, 64).trim() + "…" : title;
+    const project = item.projectId ? projectName(item.projectId) : "";
+    return `<button type="button" class="line${item.id === editingId ? " on" : ""}" data-load="${esc(item.id)}"><span>${esc(shown)}</span><span class="when">${project ? esc(project) + " · " : ""}${item.targetDate ? esc(item.targetDate) : "No date"}</span></button>`;
+  }).join("");
+  return `<div class="note-page">
+    <p class="kicker">Dump</p>
+    <h1>${scrap ? "Edit note" : "Notes"}</h1>
+    <p class="sub">Bold, underline, and bullets. Enter continues a list. Ctrl+Enter saves.</p>
     <form id="dump" class="stack">
       <div class="formatbar" aria-label="Format">
         <button type="button" data-fmt="bold" title="Bold"><b>B</b></button>
         <button type="button" data-fmt="underline" title="Underline"><u>U</u></button>
-        <button type="button" data-fmt="bullet" title="Bullet">•</button>
+        <button type="button" data-fmt="bullet" title="Bullet">Bullet</button>
       </div>
       <div class="field composer">
-        <div id="scrap" class="write" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Scrap" data-placeholder="What’s on your mind"></div>
+        <div id="scrap" class="write" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Note" data-placeholder="Write the note">${scrap ? htmlFromMarks(scrap.text) : ""}</div>
         <textarea name="text" tabindex="-1" aria-hidden="true" hidden></textarea>
-        <div class="duebar">
-          <button type="button" data-stamp="today">Due today</button>
-          <button type="button" data-stamp="tomorrow">Due tomorrow</button>
-          <button type="button" data-stamp="eow">Due EOW</button>
-          <button type="button" data-stamp="eom">Due EOM</button>
-        </div>
       </div>
-      <div class="row">
+      <div class="row note-meta">
+        <select class="field due" id="dump-project" aria-label="Project">${projects}</select>
+        <input class="field due" id="dump-project-name" aria-label="New project name" placeholder="Project name" hidden>
         <select class="field due" id="due" aria-label="Due date">
           <option value="">No date</option>
           <option value="today">Today</option>
@@ -103,22 +109,57 @@ function dumpView() {
           <option value="eow">End of week</option>
           <option value="eom">End of month</option>
           <option value="week">Next week</option>
-          <option value="pick">Pick a day</option>
+          <option value="pick" ${dueValue ? "selected" : ""}>Pick a day</option>
         </select>
-        <input class="field due" id="due-pick" type="date" aria-label="Pick a due date" hidden>
-        <button class="btn ink" type="submit">Keep it</button>
+        <input class="field due" id="due-pick" type="date" aria-label="Pick a due date" value="${esc(dueValue)}" ${dueValue ? "" : "hidden"}>
+        <button class="btn ink" type="submit">${scrap ? "Save note" : "Keep note"}</button>
+        ${scrap ? `<button class="btn" type="button" id="dump-new">New note</button>` : ""}
         <label class="btn file">Open a file<input id="file" type="file" accept=".md,.markdown,.txt,.text,text/markdown,text/plain" multiple></label>
       </div>
     </form>
-    ${recent.length ? `<div class="stack">${recent.map((s) => { const title = s.text.length > 90 ? s.text.slice(0, 72).trim() + "…" : s.text; return `<article class="card"><button type="button" class="read" data-edit="${esc(s.id)}">${rich(title)}</button>${s.targetDate ? `<div class="meta"><span>${esc(s.targetDate)}</span></div>` : ""}</article>`; }).join("")}</div>` : `<p class="empty">Nothing here yet.</p>`}`;
+    <section class="note-list">
+      <p class="kicker">Recent</p>
+      ${list || `<p class="empty">Nothing here yet.</p>`}
+    </section>
+  </div>`;
+}
+
+function placeCaret(node) {
+  const range = document.createRange();
+  range.selectNodeContents(node);
+  range.collapse(false);
+  const sel = getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
 }
 
 function applyFormat(box, fmt) {
   if (!box) return;
   box.focus();
-  if (fmt === "bold") document.execCommand("bold");
-  else if (fmt === "underline") document.execCommand("underline");
-  else if (fmt === "bullet") document.execCommand("insertUnorderedList");
+  if (fmt === "bold") {
+    document.execCommand("bold");
+    return;
+  }
+  if (fmt === "underline") {
+    document.execCommand("underline");
+    return;
+  }
+  if (fmt !== "bullet") return;
+  let listed = false;
+  try { listed = document.queryCommandState("insertUnorderedList"); } catch { listed = false; }
+  if (listed) {
+    document.execCommand("insertUnorderedList");
+    return;
+  }
+  if (!box.textContent.trim() && !box.querySelector("li")) {
+    box.innerHTML = "<ul><li><br></li></ul>";
+    placeCaret(box.querySelector("li"));
+    return;
+  }
+  const ok = document.execCommand("insertUnorderedList");
+  if (!ok || !box.querySelector("li")) {
+    document.execCommand("insertHTML", false, "<ul><li>" + (getSelection().toString() || "<br>") + "</li></ul>");
+  }
 }
 
 function wireFormat(bar, getBox) {
@@ -146,8 +187,16 @@ function formatKeys(event, box) {
   }
 }
 
-function keepScrap(text, kind, picked) {
-  db.scraps.unshift({ id: uid(), text, createdAt: new Date().toISOString(), threadId: null, projectId: null, targetDate: dueWhen(kind, picked || ""), done: false });
+function dumpProjectId() {
+  const project = document.getElementById("dump-project");
+  const name = document.getElementById("dump-project-name");
+  const id = resolveProject(project?.value || "", name?.value || "");
+  if (project?.value === "__new__" && !id) return undefined;
+  return id || null;
+}
+
+function keepScrap(text, kind, picked, projectId) {
+  db.scraps.unshift({ id: uid(), text: text.slice(0, 12000), createdAt: new Date().toISOString(), threadId: null, projectId: projectId || null, targetDate: dueWhen(kind, picked || ""), done: false });
   save();
 }
 
@@ -156,6 +205,8 @@ function bindDump(dump) {
   const hidden = dump.querySelector("textarea");
   const due = document.getElementById("due");
   const pick = document.getElementById("due-pick");
+  const project = document.getElementById("dump-project");
+  const projectName = document.getElementById("dump-project-name");
   const sync = () => { if (hidden && box) hidden.value = scrapText(box); };
   if (box && !box.dataset.wired) {
     box.dataset.wired = "1";
@@ -168,34 +219,46 @@ function bindDump(dump) {
     });
   }
   wireFormat(dump.querySelector(".formatbar"), () => document.getElementById("scrap"));
-  const templates = document.getElementById("templates");
-  if (templates && box) templates.onclick = (event) => {
-    const key = event.target.closest("button")?.dataset.template;
-    if (!TEMPLATES[key]) return;
-    const current = scrapText(box);
-    box.innerHTML = htmlFromMarks(current ? `${current}\n\n${TEMPLATES[key]}` : TEMPLATES[key]);
+  if (project && projectName) project.onchange = () => {
+    projectName.hidden = project.value !== "__new__";
+    if (!projectName.hidden) projectName.focus();
+  };
+  if (due && pick) due.onchange = () => {
+    pick.hidden = due.value !== "pick";
+    if (!pick.hidden) pick.focus();
+  };
+  const fresh = document.getElementById("dump-new");
+  if (fresh) fresh.onclick = () => { editingId = ""; render(); };
+  document.querySelectorAll("[data-load]").forEach((btn) => {
+    btn.onclick = () => { editingId = btn.dataset.load; render(); };
+  });
+  if (box) {
     sync();
     box.focus();
-  };
-  const duebar = dump.querySelector(".duebar");
-  if (duebar) duebar.onclick = (event) => {
-    const kind = event.target.closest("button")?.dataset.stamp;
-    if (!kind || !box) return;
-    const text = scrapText(box);
-    if (!text) return;
-    keepScrap(text, kind, "");
-    view = "now";
-    render();
-  };
+  }
   dump.onsubmit = (event) => {
     event.preventDefault();
     if (!box) return;
-    const text = scrapText(box);
-    if (!text) {
+    const textValue = scrapText(box);
+    if (!textValue) {
       box.focus();
       return;
     }
-    keepScrap(text, due?.value || "", pick?.value || "");
+    const projectId = dumpProjectId();
+    if (projectId === undefined) return;
+    const targetDate = dueWhen(due?.value || "", pick?.value || "");
+    const current = editingId ? db.scraps.find((item) => item.id === editingId) : null;
+    if (current) {
+      current.text = textValue.slice(0, 12000);
+      current.projectId = projectId;
+      current.targetDate = targetDate;
+      notice = "Saved.";
+      save();
+    } else {
+      keepScrap(textValue, due?.value || "", pick?.value || "", projectId);
+      editingId = "";
+      notice = "Kept.";
+    }
     render();
   };
 }

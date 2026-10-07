@@ -98,4 +98,4 @@ html[data-theme="dark"] #buddy .mouth{stroke:#e0a07e}
 .seg button{width:26px;height:26px;min-height:26px;border:0;border-radius:999px;background:transparent;color:var(--muted);padding:0;display:grid;place-items:center}
 .seg button.on{background:var(--ink);color:var(--paper)}
 .seg svg{display:block}
-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);margin:0;border:1px solid var(--line);border-radius:16px;background:var(--sheet);color:var(--ink);width:min(32rem,calc(100% - 32px));max-height:min(70vh,28rem);overflow:auto;padding:18px 18px 14px}
+dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);margin:0;border:1px solid var(--line);border-radius:12px;background:var(--sheet);color:var(--ink);width:min(44rem,calc(100% - 24px));max-height:min(88vh,44rem);overflow:auto;padding:16px}

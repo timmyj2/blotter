@@ -214,7 +214,7 @@ html[data-theme="dark"]{--tone-0:#e0a07e;--tone-1:#d8b05c;--tone-2:#9fbc88;--ton
 .formatbar button:hover{border-color:var(--clay);color:var(--clay)}
 .composer .write{min-height:7rem;border:0;background:transparent;padding:10px 12px;white-space:pre-wrap;word-break:break-word;outline:none}
 .write:empty:before{content:attr(data-placeholder);color:var(--muted);pointer-events:none}
-#edit-write{min-height:8rem;white-space:pre-wrap;word-break:break-word}
+#edit-write{min-height:28vh;white-space:pre-wrap;word-break:break-word}
 .read{white-space:pre-wrap}
 .read strong,.write strong{font-weight:800}
 .bullet{display:block}
@@ -223,4 +223,19 @@ html[data-theme="dark"]{--tone-0:#e0a07e;--tone-1:#d8b05c;--tone-2:#9fbc88;--ton
 .tag-menu[hidden]{display:none}
 .tag-menu button{display:block;width:100%;text-align:left;border:0;background:none;border-radius:8px;min-height:32px;padding:6px 10px}
 .tag-menu button:hover{background:color-mix(in srgb,var(--clay) 14%,transparent)}
+.note-page h1{font-family:var(--sans);font-weight:600;font-size:1.15rem;letter-spacing:-.01em}
+.note-page .sub{max-width:none}
+.note-page .formatbar{margin:0;gap:0;border:1px solid var(--line);border-bottom:0;border-radius:8px 8px 0 0;overflow:hidden}
+.note-page .formatbar button{min-width:0;border:0;border-right:1px solid var(--line);border-radius:0;background:var(--sheet);padding:0 12px;font-size:.78rem}
+.note-page .formatbar button:last-child{border-right:0}
+.note-page .composer{overflow:visible;border-radius:0 0 8px 8px;box-shadow:none}
+.note-page .write{min-height:42vh;padding:12px 14px;font-size:1rem;line-height:1.45}
+.write ul{margin:.2rem 0 .2rem 1.2rem;padding:0;list-style:disc}
+.write ol{margin:.2rem 0 .2rem 1.2rem;padding:0}
+.write li{display:list-item;margin:.1rem 0}
+.note-meta #dump-project{flex:1 1 14rem;width:auto;max-width:100%}
+.note-list .line{display:flex;width:100%;justify-content:space-between;gap:12px;align-items:baseline;height:auto;white-space:normal;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;padding:8px 2px;min-height:0;border-radius:0;color:inherit}
+.note-list .line.on{background:color-mix(in srgb,var(--ink) 5%,transparent)}
+.note-list .line span:first-child{min-width:0}
+.note-list .when{color:var(--muted);font-size:.75rem;flex:none}
 
