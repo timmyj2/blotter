@@ -60,7 +60,8 @@
   <p class="kicker">How to</p>
   <h2>Dump first. Sort later.</h2>
   <ol>
-    <li><strong>Dump</strong> is where a thought goes. Keep it with no date, or press <strong>Due today</strong> so it shows up on Now. You can also drop a .md or .txt file.</li>
+    <li><strong>Dump</strong> is where a thought goes. Use the bar for bold, underline, and bullets. Keep it with no date, or press <strong>Due today</strong> so it shows up on Now. You can also drop a .md or .txt file.</li>
+    <li>Right-click a tag or project to delete it. Deleting a project keeps the notes.</li>
     <li><strong>Loose</strong> is the unsorted pile. Pick a note and give it a project, a date, or both. A note sitting a week gets called out on Now.</li>
     <li><strong>Organize loose notes</strong> groups notes that share words, a name, a #tag, or a date. <strong>Undo the last sort</strong> puts them back.</li>
     <li><strong>Now</strong> leads with the one thing to do next, then the rest of the week. <strong>Calendar</strong> shows which days have something on them. Click a note to edit its text, project, or due date.</li>
@@ -74,7 +75,13 @@
   <form id="note-edit" class="stack" style="margin-top:0">
     <p class="kicker">Edit note</p>
     <h2>Change it</h2>
-    <textarea class="field" name="text" aria-label="Note text" required></textarea>
+    <div class="formatbar" id="edit-format" aria-label="Format">
+      <button type="button" data-fmt="bold" title="Bold"><b>B</b></button>
+      <button type="button" data-fmt="underline" title="Underline"><u>U</u></button>
+      <button type="button" data-fmt="bullet" title="Bullet">•</button>
+    </div>
+    <div id="edit-write" class="field write" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Note text"></div>
+    <textarea class="field" name="text" aria-label="Note text" tabindex="-1" hidden></textarea>
     <select class="field" name="project" aria-label="Project"></select>
     <input class="field" name="projectName" aria-label="New project name" placeholder="Name the project" hidden>
     <div class="row">
@@ -87,6 +94,9 @@
     </div>
   </form>
 </dialog>
+<div id="tag-menu" class="tag-menu" hidden role="menu">
+  <button type="button" data-act="delete" role="menuitem">Delete</button>
+</div>
 <script>
 (() => {
   const app = document.querySelector(".app");
@@ -119,12 +129,13 @@
 <script>
 (async () => {
   try {
-    const [ra, rb, rm, rp, rn] = await Promise.all([
+    const [ra, rb, rm, rp, rn, rf] = await Promise.all([
       fetch("/blotter-app.a.b64"),
       fetch("/blotter-app.b.b64"),
       fetch("/map-view.js"),
       fetch("/projects-view.js"),
       fetch("/now-view.js"),
+      fetch("/format.js"),
     ]);
     if (!ra.ok || !rb.ok) throw new Error("missing app");
     const b64 = ((await ra.text()) + (await rb.text())).replace(/\s+/g, "");
@@ -174,6 +185,22 @@
       "const id = e.target.dataset.view;",
       'const id = e.target.closest("button")?.dataset.view;'
     );
+    if (rf.ok) {
+      const format = (await rf.text()).trim();
+      if (format.includes("function bindFormat")) {
+        const hooked = "\nfunction bind() {\n  bindProjects();";
+        if (text.includes(hooked)) text = text.replace(hooked, "\n" + format + hooked);
+        else text = text.replace("\nfunction bind() {", "\n" + format + "\nfunction bind() {");
+        const tail = 'dialog.addEventListener("click", (event) => { if (event.target === dialog) closeEdit(); });\n    }\n  }\n}';
+        if (text.includes(tail)) {
+          text = text.replace(tail, tail.replace(/\n\}$/, "\n  bindFormat();\n}"));
+        }
+        text = text.replace(
+          '  const box = document.querySelector("#note-edit textarea[name=text]");\n  if (box) {\n    box.focus();\n    box.setSelectionRange(box.value.length, box.value.length);\n  }\n}',
+          '  if (typeof paintEdit === "function") paintEdit();\n}'
+        );
+      }
+    }
     (0, eval)(text);
   } catch (err) {
     const view = document.getElementById("view");
