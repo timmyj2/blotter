@@ -67,7 +67,7 @@
     <li><strong>Now</strong> leads with the one thing to do next, then the rest of the week. <strong>Calendar</strong> shows which days have something on them. Click a note to edit its text, project, or due date.</li>
     <li><strong>Projects</strong> opens one window per project, as many as you want. The year bar shows where those projects overlap.</li>
     <li><strong>Map</strong> draws the links. Type <strong>[[a name]]</strong> in a note to connect it to a matching title. <strong>Search</strong> takes words, "a phrase", #tag, or [[name]], and lists what that note connects to.</li>
-    <li>Your notes stay on this Google account. Another person on the list cannot open them.</li>
+    <li><strong>Export</strong> downloads the full note as markdown, or opens Gmail so you can send it to yourself or someone else. On Loose and No date, select the notes first.</li>
   </ol>
   <div class="row" style="margin-top:14px"><button type="button" class="btn ink" id="close-help">Close</button></div>
 </dialog>
@@ -90,6 +90,7 @@
     </div>
     <div class="row" style="margin-top:6px">
       <button class="btn ink" type="submit">Save</button>
+      <button class="btn" type="button" id="export-editing">Export</button>
       <button class="btn" type="button" id="cancel-edit">Cancel</button>
     </div>
   </form>
@@ -97,6 +98,20 @@
 <div id="tag-menu" class="tag-menu" hidden role="menu">
   <button type="button" data-act="delete" role="menuitem">Delete</button>
 </div>
+<dialog id="export-mail">
+  <form id="export-form" class="stack" style="margin-top:0">
+    <p class="kicker">Export</p>
+    <h2>Markdown</h2>
+    <p class="sub" id="export-count"></p>
+    <input class="field" id="export-to" name="to" type="email" aria-label="Email address" placeholder="Email address" required>
+    <p class="muted">This opens Gmail as you. Change the address if it should go to someone else. A long note downloads as a file so you can attach it. Sign-in does not send mail on its own.</p>
+    <div class="row" style="margin-top:8px">
+      <button class="btn ink" type="submit">Open in Gmail</button>
+      <button class="btn" type="button" id="export-download">Download .md</button>
+      <button class="btn" type="button" id="export-close">Close</button>
+    </div>
+  </form>
+</dialog>
 <script>
 (() => {
   const app = document.querySelector(".app");
@@ -129,13 +144,14 @@
 <script>
 (async () => {
   try {
-    const [ra, rb, rm, rp, rn, rf] = await Promise.all([
+    const [ra, rb, rm, rp, rn, rf, rx] = await Promise.all([
       fetch("/blotter-app.a.b64"),
       fetch("/blotter-app.b.b64"),
       fetch("/map-view.js"),
       fetch("/projects-view.js"),
       fetch("/now-view.js"),
       fetch("/format.js"),
+      fetch("/export.js"),
     ]);
     if (!ra.ok || !rb.ok) throw new Error("missing app");
     const b64 = ((await ra.text()) + (await rb.text())).replace(/\s+/g, "");
@@ -185,6 +201,18 @@
       "const id = e.target.dataset.view;",
       'const id = e.target.closest("button")?.dataset.view;'
     );
+    text = text.replace(
+      '<button class="btn" type="button" id="clear">Clear</button>',
+      '<button class="btn" type="button" id="export-selected">Export</button><button class="btn" type="button" id="clear">Clear</button>'
+    );
+    if (rx.ok) {
+      const exp = (await rx.text()).trim();
+      if (exp.startsWith("let exportNotes")) {
+        const hooked = "\nfunction bind() {\n  bindProjects();";
+        if (text.includes(hooked)) text = text.replace(hooked, () => "\n" + exp + hooked);
+        else text = text.replace("\nfunction bind() {", () => "\n" + exp + "\nfunction bind() {");
+      }
+    }
     if (rf.ok) {
       const format = (await rf.text()).trim();
       if (format.includes("function bindFormat")) {

@@ -82,7 +82,7 @@ function dumpView() {
     const title = line.replace(/^(?:- |\*\*|## |\+\+)/, "").replace(/\*\*/g, "");
     const shown = title.length > 72 ? title.slice(0, 64).trim() + "…" : title;
     const project = item.projectId ? projectName(item.projectId) : "";
-    return `<button type="button" class="line${item.id === editingId ? " on" : ""}" data-load="${esc(item.id)}"><span>${esc(shown)}</span><span class="when">${project ? esc(project) + " · " : ""}${item.targetDate ? esc(item.targetDate) : "No date"}</span></button>`;
+    return `<div class="line-row"><label class="check"><input type="checkbox" data-id="${esc(item.id)}" ${selected.has(item.id) ? "checked" : ""} aria-label="Select note"></label><button type="button" class="line${item.id === editingId ? " on" : ""}" data-load="${esc(item.id)}"><span>${esc(shown)}</span><span class="when">${project ? esc(project) + " · " : ""}${item.targetDate ? esc(item.targetDate) : "No date"}</span></button></div>`;
   }).join("");
   return `<div class="note-page">
     <p class="kicker">Dump</p>
@@ -115,6 +115,10 @@ function dumpView() {
         <button class="btn ink" type="submit">${scrap ? "Save note" : "Keep note"}</button>
         ${scrap ? `<button class="btn" type="button" id="dump-new">New note</button>` : ""}
         <label class="btn file">Open a file<input id="file" type="file" accept=".md,.markdown,.txt,.text,text/markdown,text/plain" multiple></label>
+      </div>
+      <div class="row">
+        <button class="btn" type="button" id="export-open">Export this note</button>
+        <button class="btn" type="button" id="export-selected">Export selected</button>
       </div>
     </form>
     <section class="note-list">
@@ -232,10 +236,7 @@ function bindDump(dump) {
   document.querySelectorAll("[data-load]").forEach((btn) => {
     btn.onclick = () => { editingId = btn.dataset.load; render(); };
   });
-  if (box) {
-    sync();
-    box.focus();
-  }
+  if (box) sync();
   dump.onsubmit = (event) => {
     event.preventDefault();
     if (!box) return;
@@ -367,6 +368,7 @@ function bindFormat() {
   const dump = document.getElementById("dump");
   if (dump) bindDump(dump);
   bindEdit();
+  if (typeof bindExport === "function") bindExport();
   document.querySelectorAll("#tags [data-hash], #tags [data-project], [data-open], .win [data-project]").forEach((el) => {
     if (!el.title) el.title = "Right-click to delete";
   });
