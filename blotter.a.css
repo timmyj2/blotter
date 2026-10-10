@@ -82,7 +82,7 @@ textarea.field{min-height:5.5rem;resize:vertical}
 .who a{text-decoration:underline;text-underline-offset:3px}
 .sidefoot{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
 .sidefoot .btn{min-height:28px}
-#buddy{position:relative;width:30px;height:32px;flex:none;pointer-events:none;transform-origin:50% 80%;filter:drop-shadow(0 4px 8px rgba(28,25,21,.14))}
+#buddy{position:relative;width:30px;height:32px;margin-left:8px;flex:none;pointer-events:none;transform-origin:50% 80%;filter:drop-shadow(0 4px 8px rgba(28,25,21,.14))}
 #buddy svg{display:block;width:100%;height:auto}
 #buddy .body{fill:#1c1915}
 #buddy .cheek{fill:#8c4a2f}

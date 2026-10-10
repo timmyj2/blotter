@@ -114,11 +114,11 @@ function dumpView() {
         <input class="field due" id="due-pick" type="date" aria-label="Pick a due date" value="${esc(dueValue)}" ${dueValue ? "" : "hidden"}>
         <button class="btn ink" type="submit">${scrap ? "Save note" : "Keep note"}</button>
         ${scrap ? `<button class="btn" type="button" id="dump-new">New note</button>` : ""}
-        <label class="btn file">Open a file<input id="file" type="file" accept=".md,.markdown,.txt,.text,text/markdown,text/plain" multiple></label>
       </div>
-      <div class="row">
+      <div class="row note-actions">
         <button class="btn" type="button" id="export-open">Export this note</button>
         <button class="btn" type="button" id="export-selected">Export selected</button>
+        <label class="btn file">Open a file<input id="file" type="file" accept=".md,.markdown,.txt,.text,text/markdown,text/plain" multiple></label>
       </div>
     </form>
     <section class="note-list">
