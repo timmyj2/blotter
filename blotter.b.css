@@ -14,7 +14,7 @@
 .prow .plan input{border-color:var(--line);background:var(--sheet);color:var(--ink)}
 .prow .track{display:block;width:100%;border:0;padding:0;min-height:14px;background:color-mix(in srgb,var(--line) 85%,transparent)}
 .scale.wide{display:grid;grid-template-columns:repeat(12,1fr);margin-top:8px}
-dialog::backdrop{background:rgba(28,25,21,.4)}
+dialog::backdrop{background:rgba(4,28,28,.45)}
 #edit-note{max-height:min(85vh,36rem);width:min(34rem,calc(100% - 32px))}
 #edit-note .stack{margin-top:10px}
 #edit-note textarea.field{min-height:8rem}
@@ -49,7 +49,7 @@ nav{flex-direction:column}
 .tags{flex-direction:column;flex-wrap:nowrap;margin-top:16px}
 .tags p{padding:0 8px 4px}
 .tags button{border:0;border-radius:8px;text-align:left}
-.tags button.on{background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--ink)}
+.tags button.on{background:color-mix(in srgb,var(--clay) 16%,transparent);color:var(--ink)}
 main{padding:12px 16px 32px}
 .who{flex:1 1 auto}
 .sidefoot{margin-top:auto;flex-direction:column;align-items:flex-start}
@@ -65,14 +65,14 @@ main{padding:14px 22px 36px}
 nav button,nav a.navbtn,.tags button,.btn,.seg button,.day,.card,.week li,.scraplink,.read,.meta button,.who a{
 transition:transform .28s cubic-bezier(.2,.8,.2,1), background .22s, color .22s, border-color .22s, box-shadow .28s, padding .25s, background-size .3s;
 }
-nav button:hover:not(.on),nav a.navbtn:hover{transform:translateX(4px);color:var(--ink);background:color-mix(in srgb,var(--clay) 12%,transparent)}
-.tags button:hover:not(:disabled):not(.on){transform:translateY(-3px);border-color:var(--clay);color:var(--ink)}
-.btn:hover{transform:translateY(-3px);box-shadow:0 10px 18px rgba(28,25,21,.12)}
+nav button:hover:not(.on),nav a.navbtn:hover{transform:none;color:var(--ink);background:color-mix(in srgb,var(--clay) 12%,transparent)}
+.tags button:hover:not(:disabled):not(.on){transform:none;border-color:var(--clay);color:var(--ink)}
+.btn:hover{transform:none;box-shadow:none}
 .btn:active{transform:translateY(0) scale(.97)}
-.btn.ink:hover{background:var(--clay);border-color:var(--clay)}
+.btn.ink:hover{filter:brightness(1.08)}
 .seg button:hover:not(.on){color:var(--ink);background:color-mix(in srgb,var(--clay) 18%,transparent)}
 .card{background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:7px 10px}
-.card:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--clay) 45%,var(--line));box-shadow:0 10px 22px rgba(28,25,21,.08)}
+.card:hover{transform:none;border-color:color-mix(in srgb,var(--clay) 45%,var(--line));box-shadow:none}
 .day:hover:not(.on){transform:scale(1.04);background:color-mix(in srgb,var(--clay) 12%,transparent)}
 .day.on:hover{transform:scale(1.03)}
 .dots i{transition:transform .2s}
@@ -109,7 +109,7 @@ background-size:0 2px;
 .track .tick{position:absolute;top:-3px;width:4px;height:14px;margin-left:-2px;border-radius:2px;background:var(--ink)}
 .track .now{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--ink);opacity:.55}
 .windows{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;margin-top:12px}
-.win{display:flex;flex-direction:column;min-height:0;max-height:min(62vh,440px);border:1px solid var(--line);border-radius:10px;background:var(--ink);color:var(--paper);overflow:hidden}
+.win{display:flex;flex-direction:column;min-height:0;max-height:min(62vh,440px);border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);overflow:hidden}
 .win header{display:flex;align-items:center;gap:6px;padding:6px 8px;border-bottom:1px solid color-mix(in srgb,var(--paper) 18%,transparent);font-size:.85rem}
 .win header strong{font-weight:600}
 .win .dot{width:8px;height:8px;border-radius:50%;background:var(--clay);flex:none}
@@ -123,12 +123,12 @@ background-size:0 2px;
 .win-note .read span,.win-note .scraplink span{display:block;white-space:normal;line-height:1.35}
 .win-body .read,.win-body .scraplink{color:inherit}
 .win .muted,.win .empty{color:color-mix(in srgb,var(--paper) 68%,transparent);margin:2px 0 0;font-size:.72rem}
-html[data-theme="dark"] .win{background:var(--sheet);color:var(--ink);border-color:var(--line)}
-html[data-theme="dark"] .win header{border-bottom-color:var(--line)}
-html[data-theme="dark"] .win .muted,html[data-theme="dark"] .win .empty{color:var(--muted)}
+html[data-theme="dark"] .win{background:#021414;color:#ffe6cb;border-color:rgba(255,230,203,.16)}
+html[data-theme="dark"] .win header{border-bottom-color:rgba(255,230,203,.16)}
+html[data-theme="dark"] .win .muted,html[data-theme="dark"] .win .empty{color:rgba(255,230,203,.68)}
 /* calendar warmth: month grid + project year chart */
-:root{--tone-0:#8c4a2f;--tone-1:#a5761b;--tone-2:#5c7a4b;--tone-3:#4b6884;--tone-4:#7b4d6c;--tone-5:#3c7770;--cell:#fdfbf7;--wkend:#f5efe4;--today-ink:#faf8f4}
-html[data-theme="dark"]{--tone-0:#e0a07e;--tone-1:#d8b05c;--tone-2:#9fbc88;--tone-3:#93b2d0;--tone-4:#cc9cbd;--tone-5:#86c4ba;--cell:#26211c;--wkend:#2b251f;--today-ink:#1c1915}
+:root{--tone-0:#0053fd;--tone-1:#0171a9;--tone-2:#0e8f7a;--tone-3:#1769ff;--tone-4:#5b4ddb;--tone-5:#c4840a;--cell:#f7fbff;--wkend:#e3eefb;--today-ink:#fff}
+html[data-theme="dark"]{--tone-0:#ffbd38;--tone-1:#7ec8c8;--tone-2:#9bb7ff;--tone-3:#ffe6cb;--tone-4:#8fd9a0;--tone-5:#ff9b6a;--cell:#062424;--wkend:#083030;--today-ink:#041c1c}
 .month h1 .yr{color:var(--muted);font-style:italic}
 .cal-nav .btn{min-width:32px;padding:0 10px}
 .cal-nav #prev,.cal-nav #next{width:32px;padding:0;font-size:1.05rem;line-height:1}
@@ -167,9 +167,9 @@ html[data-theme="dark"]{--tone-0:#e0a07e;--tone-1:#d8b05c;--tone-2:#9fbc88;--ton
   .cal-card .dots i{width:6px;height:6px}
   .cal-card .dots em,.cal-card .tally{display:none}
 }
-.week-head{font-family:var(--serif);font-weight:500;font-size:1.6rem;margin-top:22px}
+.week-head{font-family:var(--sans);font-weight:600;font-size:1.35rem;letter-spacing:-.02em;margin-top:22px}
 .week li{display:grid;grid-template-columns:4.2rem minmax(0,1fr);gap:4px 10px;align-items:start;padding:7px 6px;border-radius:0}
-.week li > strong{display:flex;align-items:baseline;gap:5px;font-family:var(--serif);font-weight:500;font-size:1.15rem;line-height:1.2}
+.week li > strong{display:flex;align-items:baseline;gap:5px;font-family:var(--sans);font-weight:600;font-size:1.05rem;line-height:1.2}
 .week li > strong span{font-family:var(--sans);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .week li .wk-body{min-width:0}
 .week li .wk-body .row{flex-wrap:nowrap}
